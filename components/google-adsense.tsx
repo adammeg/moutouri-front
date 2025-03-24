@@ -52,7 +52,7 @@ export default function GoogleAdSense({
   return (
     <div className={className} style={{ overflow: 'hidden', ...defaultStyle }}>
       <ins
-        ref={adRef}
+        ref={adRef as React.RefObject<HTMLModElement>}
         className="adsbygoogle"
         style={{ display: 'block' }}
         data-ad-client="ca-pub-8717268919598293"
