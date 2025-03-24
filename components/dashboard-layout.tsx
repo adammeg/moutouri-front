@@ -48,7 +48,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigation = [
     { name: "Tableau de Bord", href: "/dashboard", icon: Home },
     { name: "Produits à vendre", href: "/products", icon: ShoppingBag },
-    ...(isAdmin ? [{ name: "Administration", href: "/admin", icon: ShieldAlert }, { name: 'Categories', href: '/admin/categories', icon: Tag, admin: true }] : []),
+    ...(isAdmin ? [{ name: "Administration", href: "/admin", icon: ShieldAlert }, { name: 'Categories', href: '/admin/categories', icon: Tag, admin: true }, { name: 'Ads', href: '/admin/ads', icon: Tag, admin: true }] : []),
   ]
 
   return (

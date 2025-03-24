@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import GoogleAdSense from '@/components/google-adsense';
 import HeroBackground from "@/components/hero-background";
+import PromotionalAds from '@/components/promotional-ads';
 
 // Animation variants
 const fadeIn = {
@@ -31,12 +32,12 @@ export default function Home() {
       <header className="bg-black text-white py-6 relative z-10">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Image 
-              src="/logo-moutouri.png" 
-              alt="Moutouri" 
-              width={32} 
-              height={32} 
-              className="h-8 w-8" 
+            <Image
+              src="/logo-moutouri.png"
+              alt="Moutouri"
+              width={32}
+              height={32}
+              className="h-8 w-8"
             />
             <h1 className="text-2xl font-bold">Moutouri</h1>
           </div>
@@ -55,7 +56,7 @@ export default function Home() {
         {/* Hero section with animated background */}
         <section className="py-24 relative overflow-hidden">
           <HeroBackground />
-          
+
           <div className="container mx-auto px-4 text-center relative z-10">
             <motion.div
               initial="hidden"
@@ -67,7 +68,9 @@ export default function Home() {
                 La Marketplace Ultime pour Motards
               </h2>
             </motion.div>
-            
+            <section className="container mx-auto px-4 -mt-6 mb-12">
+              <PromotionalAds position="home-hero" className="shadow-lg" />
+            </section>
             <motion.div
               initial="hidden"
               animate="visible"
@@ -75,11 +78,11 @@ export default function Home() {
               transition={{ duration: 0.7, delay: 0.2 }}
             >
               <p className="text-xl md:text-2xl mb-10 text-gray-200 max-w-3xl mx-auto">
-                Achetez, vendez et échangez des motos, scooters et pièces dans une communauté 
+                Achetez, vendez et échangez des motos, scooters et pièces dans une communauté
                 créée par des motards, pour des motards.
               </p>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -96,7 +99,7 @@ export default function Home() {
 
         {/* Categories section with images */}
         <section className="py-16 container mx-auto px-4">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -105,8 +108,8 @@ export default function Home() {
           >
             Explorez les Catégories
           </motion.h2>
-          
-          <motion.div 
+
+          <motion.div
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
@@ -116,10 +119,10 @@ export default function Home() {
             <motion.div variants={fadeIn} transition={{ duration: 0.5 }}>
               <Card className="border-2 border-primary/20 hover:border-primary transition-all duration-300 overflow-hidden group">
                 <div className="relative h-48 overflow-hidden">
-                  <Image 
-                    src="/images/sportbike.jpg" 
-                    alt="Moto sportive" 
-                    fill 
+                  <Image
+                    src="images/sportbike.jpg"
+                    alt="Moto sportive"
+                    fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
@@ -145,10 +148,10 @@ export default function Home() {
             <motion.div variants={fadeIn} transition={{ duration: 0.5 }}>
               <Card className="border-2 border-primary/20 hover:border-primary transition-all duration-300 overflow-hidden group">
                 <div className="relative h-48 overflow-hidden">
-                  <Image 
-                    src="/images/scooter.jpg" 
-                    alt="Scooter électrique" 
-                    fill 
+                  <Image
+                    src="images/scooter.png"
+                    alt="Scooter électrique"
+                    fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
@@ -174,10 +177,10 @@ export default function Home() {
             <motion.div variants={fadeIn} transition={{ duration: 0.5 }}>
               <Card className="border-2 border-primary/20 hover:border-primary transition-all duration-300 overflow-hidden group">
                 <div className="relative h-48 overflow-hidden">
-                  <Image 
-                    src="/images/parts.jpg" 
-                    alt="Pièces de moto" 
-                    fill 
+                  <Image
+                    src="images/parts.png"
+                    alt="Pièces de moto"
+                    fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
@@ -206,9 +209,9 @@ export default function Home() {
         <section className="py-16 bg-muted relative overflow-hidden">
           <div className="absolute -right-24 -top-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
           <div className="absolute -left-24 -bottom-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-          
+
           <div className="container mx-auto px-4 relative z-10">
-            <motion.h2 
+            <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -217,8 +220,8 @@ export default function Home() {
             >
               Pourquoi Choisir Moutouri?
             </motion.h2>
-            
-            <motion.div 
+
+            <motion.div
               variants={staggerContainer}
               initial="hidden"
               whileInView="visible"
@@ -229,16 +232,15 @@ export default function Home() {
                 { title: "Vendeurs Vérifiés", desc: "Notre communauté de vendeurs est vérifiée pour garantir des annonces légitimes et des transactions sécurisées." },
                 { title: "Annonces Détaillées", desc: "Informations complètes sur les produits, images de haute qualité et transparence des prix." },
                 { title: "Communauté de Motards", desc: "Connectez-vous avec d'autres passionnés qui partagent votre passion pour les motos et la conduite." },
-                { title: "Messagerie Sécurisée", desc: "Communiquez en toute sécurité avec les acheteurs et vendeurs via notre système de messagerie intégré." },
                 { title: "Publication Facile", desc: "Publiez vos articles à vendre rapidement grâce à notre processus simplifié et convivial." },
                 { title: "Compatible Mobile", desc: "Accédez à la marketplace n'importe quand, n'importe où depuis votre smartphone ou tablette." }
               ].map((feature, i) => (
-                <motion.div 
+                <motion.div
                   key={i}
-                  variants={fadeIn} 
+                  variants={fadeIn}
                   className="bg-card p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
                 >
-                  <motion.h3 
+                  <motion.h3
                     className="text-xl font-bold mb-3 text-primary"
                     whileHover={{ x: 5 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -254,7 +256,7 @@ export default function Home() {
 
         {/* Testimonial section (new) */}
         <section className="py-16 container mx-auto px-4">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -263,24 +265,24 @@ export default function Home() {
           >
             Ce que disent nos utilisateurs
           </motion.h2>
-          
-          <motion.div 
+
+          <motion.div
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto"
           >
-            <motion.div 
-              variants={fadeIn} 
+            <motion.div
+              variants={fadeIn}
               className="bg-card p-6 rounded-lg shadow border border-primary/10"
             >
               <div className="flex items-center mb-4">
                 <div className="rounded-full bg-primary/10 p-2 mr-4">
-                  <Image 
-                    src="/images/avatar1.jpg" 
-                    alt="Utilisateur" 
-                    width={50} 
+                  <Image
+                    src="images/avatar1.png"
+                    alt="Utilisateur"
+                    width={50}
                     height={50}
                     className="rounded-full"
                   />
@@ -292,17 +294,17 @@ export default function Home() {
               </div>
               <p className="italic">« J'ai trouvé ma Kawasaki Z900 sur Moutouri en seulement deux jours. Le contact avec le vendeur était super simple et le prix était juste. »</p>
             </motion.div>
-            
-            <motion.div 
-              variants={fadeIn} 
+
+            <motion.div
+              variants={fadeIn}
               className="bg-card p-6 rounded-lg shadow border border-primary/10"
             >
               <div className="flex items-center mb-4">
                 <div className="rounded-full bg-primary/10 p-2 mr-4">
-                  <Image 
-                    src="/images/avatar2.jpg" 
-                    alt="Utilisateur" 
-                    width={50} 
+                  <Image
+                    src="images/avatar2.png"
+                    alt="Utilisateur"
+                    width={50}
                     height={50}
                     className="rounded-full"
                   />
@@ -343,7 +345,7 @@ export default function Home() {
               </motion.div>
             </motion.div>
           </div>
-          
+
           {/* Decorative elements */}
           <div className="absolute left-0 right-0 -bottom-10 h-20 bg-gradient-to-t from-background to-transparent"></div>
         </section>
@@ -365,12 +367,12 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
-              <Image 
-                src="/logo-moutouri.png" 
-                alt="Moutouri" 
-                width={24} 
+              <Image
+                src="/logo-moutouri.png"
+                alt="Moutouri"
+                width={24}
                 height={24}
-                className="h-6 w-6" 
+                className="h-6 w-6"
               />
               <span className="text-xl font-bold">Moutouri</span>
             </div>

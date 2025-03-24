@@ -26,7 +26,7 @@ export default function HeroBackground() {
         className="absolute top-[10%] left-[5%] opacity-15 z-0"
       >
         <Image 
-          src="/images/motorcycle-silhouette1.png" 
+          src="images/motorcycle-silhouette1.png"   
           alt="" 
           width={300} 
           height={180} 
@@ -41,7 +41,7 @@ export default function HeroBackground() {
         className="absolute top-[50%] right-[5%] opacity-20 z-0"
       >
         <Image 
-          src="/images/motorcycle-silhouette2.png" 
+          src="images/motorcycle-silhouette2.png" 
           alt="" 
           width={350} 
           height={200} 
@@ -51,7 +51,7 @@ export default function HeroBackground() {
       
       {/* Main background image */}
       <Image 
-        src="/images/hero-background.jpg" 
+        src="images/hero-background.png" 
         alt="Motorcycle background" 
         fill
         priority
