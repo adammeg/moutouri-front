@@ -151,9 +151,11 @@ export default function NewProductPage() {
         description: formData.description,
         price: Number(formData.price),
         category: formData.category,
-        condition: formData.condition,
-        location,
-        // Include any other required fields here
+        condition: formData.condition || 'Used',  // Provide default value
+        location: formData.location,
+        year: formData.year || '2023',  // Add required field
+        kilometrage: formData.mileage || '0',  // Add required field
+        cylinder: formData.engineSize || '0',  // Add required field
       };
       
       console.log("Submitting product data:", productData);
