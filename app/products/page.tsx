@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast"
 import { getProducts } from "@/services/products"
 import { getCategories } from "@/services/categories"
 import { SearchBar } from "@/components/search-bar"
-
+import GoogleAdSense from "@/components/google-adsense"
 // Components that use search params need to be separated
 function ProductsContent() {
   const [products, setProducts] = useState<any[]>([])
@@ -192,30 +192,47 @@ function ProductsContent() {
           <>
             <TabsContent value="all" className="mt-6">
               {products.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  {products.map((product: any) => (
-                    <ProductCard 
-                      key={product._id}
-                      product={product}
-                    >
-                      {product.images && product.images.length > 0 ? (
-                        <Image
-                          src={product.images[0]}
-                          alt={product.title}
-                          width={0}
-                          height={0}
-                          sizes="100vw"
-                          className="h-48 w-full object-cover rounded-t"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="h-48 w-full bg-gray-200 flex items-center justify-center rounded-t">
-                          <span className="text-gray-500">Pas d'image</span>
-                        </div>
-                      )}
-                    </ProductCard>
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                    {products.map((product: any) => (
+                      <ProductCard 
+                        key={product._id}
+                        product={product}
+                      >
+                        {product.images && product.images.length > 0 ? (
+                          <Image
+                            src={product.images[0]}
+                            alt={product.title}
+                            width={0}
+                            height={0}
+                            sizes="100vw"
+                            className="h-48 w-full object-cover rounded-t"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="h-48 w-full bg-gray-200 flex items-center justify-center rounded-t">
+                            <span className="text-gray-500">Pas d'image</span>
+                          </div>
+                        )}
+                      </ProductCard>
+                    ))}
+                  </div>
+                  <div className="my-6 w-full">
+                    <GoogleAdSense 
+                      slot="2488891530"
+                      className="adsense-container"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                    {products.slice(4).map((product: any) => (
+                      <ProductCard 
+                        key={product._id}
+                        product={product}
+                      />
+                    ))}
+                  </div>
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <Package className="h-12 w-12 text-muted-foreground mb-4" />

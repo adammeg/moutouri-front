@@ -3,6 +3,7 @@ import { BikeIcon as Motorcycle, Sparkles, Wrench } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import GoogleAdSense from '@/components/google-adsense'
 
 export default function Home() {
   return (
@@ -138,6 +139,19 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Horizontal ad at the top */}
+        <GoogleAdSense
+          slot="2488891530"
+          format="horizontal"
+          className="adsense-container"
+        />
+
+        {/* Responsive ad in the middle */}
+        <GoogleAdSense
+          slot="2488891530"
+          className="adsense-container my-8"
+        />
       </main>
 
       <footer className="bg-black text-white py-10">

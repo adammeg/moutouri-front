@@ -31,7 +31,18 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-ring: 220 70% 50%;
   }
-
+  .adsense-container {
+    margin: 2rem 0;
+    overflow: hidden;
+    width: 100%;
+    min-height: 90px;
+    background-color: transparent;
+  }
+  
+  /* Prevent grayscale on product images */
+  .product-card img {
+    filter: none !important;
+  }
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
