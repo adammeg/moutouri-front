@@ -95,7 +95,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
               <div className="flex items-center gap-2">
                 <ModeToggle />
-                <Button variant="ghost" size="icon" onClick={logout}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => {
+                    logout();
+                    window.location.href = '/';
+                  }}
+                >
                   <LogOut className="h-5 w-5" />
                   <span className="sr-only">Déconnexion</span>
                 </Button>
