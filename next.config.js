@@ -1,20 +1,28 @@
- /** @type {import('next').NextConfig} */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
       remotePatterns: [
+        // Backend server on Render
         {
           protocol: 'https',
           hostname: 'moutouri-back.onrender.com',
           pathname: '/uploads/**',
         },
+        // Local backend server
         {
           protocol: 'http',
           hostname: 'localhost',
           port: '5000',
-          pathname: '/uploads/**',
+          pathname: '/**',
+        },
+        // Cloudinary images
+        {
+          protocol: 'https',
+          hostname: 'res.cloudinary.com',
+          pathname: '/dzamzt9og/**',
         },
       ],
-      domains: ['localhost', 'moutouri-back.onrender.com'],
+      domains: ['localhost', 'moutouri-back.onrender.com', 'res.cloudinary.com'],
       unoptimized: true,
     },
     experimental: {
@@ -24,7 +32,7 @@ const nextConfig = {
     async headers() {
       return [
         {
-          source: '/api/:path*',
+          source: '/:path*',
           headers: [
             { key: 'Access-Control-Allow-Credentials', value: 'true' },
             { key: 'Access-Control-Allow-Origin', value: '*' },

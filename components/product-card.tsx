@@ -6,13 +6,15 @@ import { formatPrice } from "@/lib/utils"
 import { Heart, ShoppingCart, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import SafeImage from '@/components/safe-image'
+import { ReactNode } from 'react'
 
 export interface ProductCardProps {
   product: any
-  actions?: React.ReactNode
-  children?: React.ReactNode // Add this to allow children
+  actions?: ReactNode
+  children?: ReactNode
 }
-export function ProductCard({ product, actions, children }: ProductCardProps): JSX.Element {
+
+export function ProductCard({ product, actions, children }: ProductCardProps) {
   if (!product) return <></> // Return empty fragment instead of null
 
   return (
