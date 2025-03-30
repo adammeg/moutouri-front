@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import Script from "next/script"
+import { useEffect } from "react"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from '@/contexts/auth-context'
@@ -27,6 +28,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  useEffect(() => {
+    // Check for auth state on initial load
+    const storedUser = localStorage.getItem('user');
+    console.log("🔍 Layout init - user in localStorage:", storedUser ? "Found" : "Not found");
+    
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        console.log("🔑 Token found:", user.token || user.accessToken ? "Yes" : "No");
+      } catch (e) {
+        console.error("❌ Error parsing stored user:", e);
+      }
+    } else {
+      console.log("❓ No stored user found");
+    }
+  }, []);
+
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>

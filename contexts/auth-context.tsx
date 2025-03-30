@@ -185,33 +185,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     
     try {
-      const response = await axios.post(`${API_URL}/users/login`, {
+      console.log(`🔒 Logging in user: ${email}`);
+      const response = await axios.post(`${API_URL}/auth/login`, {
         email,
         password
       });
       
-      const { success, user: userData, token, message } = response.data;
+      console.log('👤 Login response:', response.data);
       
-      if (success && userData) {
-        // Ensure token is included with user data
-        const userWithToken = {
+      if (response.data.success) {
+        const userData = response.data.user;
+        const token = userData.token || userData.accessToken;
+        
+        if (!token) {
+          console.error('❌ No token in response data');
+          return { 
+            success: false, 
+            message: 'Authentication failed: No token provided by server' 
+          };
+        }
+        
+        // Ensure we have an object that's safe to store
+        const userToStore = {
           ...userData,
-          token: token || userData.token || userData.accessToken
+          token: token // Ensure token is included
         };
         
-        localStorage.setItem('user', JSON.stringify(userWithToken));
-        setUser(userWithToken);
+        console.log('💾 Storing user data:', userToStore);
         
+        // Save user to state and localStorage
+        setUser(userToStore);
+        localStorage.setItem('user', JSON.stringify(userToStore));
+        
+        console.log('✅ User stored successfully');
         return { success: true, message: 'Login successful' };
       } else {
-        return { success: false, message: message || 'Login failed' };
+        console.error('❌ Login failed:', response.data.message);
+        return { 
+          success: false, 
+          message: response.data.message || 'Invalid email or password' 
+        };
       }
     } catch (error: any) {
-      console.error('Login error:', error);
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'An error occurred during login' 
-      };
+      console.error('🚨 Login error:', error);
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        'An error occurred during login';
+      
+      return { success: false, message: errorMessage };
     } finally {
       setIsLoading(false);
     }

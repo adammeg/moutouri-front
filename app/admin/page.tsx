@@ -97,7 +97,9 @@ export default function AdminDashboardPage() {
       }
     }
 
+    // Only fetch when we have an admin user and we're not already loading
     if (isAdmin && !isLoading) {
+      console.log("🚀 Admin detected, fetching admin data...")
       fetchAdminData()
     }
   }, [isAdmin, user, router, toast, getAuthToken])

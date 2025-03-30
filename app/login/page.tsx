@@ -1,122 +1,189 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { BikeIcon as Motorcycle } from "lucide-react"
+import { z } from "zod"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { loginUser, setAuthHeader } from "@/services/auth"
+import { useAuth } from "@/contexts/auth-context"
+import PublicLayout from "@/components/public-layout"
+
+// Form validation schema
+const loginSchema = z.object({
+  email: z.string().email("Email invalide"),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+})
+
+type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const { login } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  })
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
+  const onSubmit = async (values: LoginFormValues) => {
     try {
-      // Call the loginUser function from our auth service
-      const response = await loginUser({ email, password });
+      setIsLoading(true)
+      console.log("🔐 Starting login process with:", { email: values.email })
+      
+      const response = await login(values.email, values.password)
+      console.log("🔐 Login response:", response)
       
       if (response.success) {
-        // The loginUser function should already store tokens and user data
-        
+        console.log("✅ Login successful, redirecting to dashboard")
         toast({
           title: "Connexion réussie",
-          description: `Bienvenue ${response.user.firstName}!`,
-        });
+          description: "Vous êtes maintenant connecté",
+        })
         
-        // Store user info manually to ensure it's available
-        localStorage.setItem('user', JSON.stringify(response.user));
-        localStorage.setItem('accessToken', response.accessToken);
-        localStorage.setItem('refreshToken', response.refreshToken);
-        
-        // Add a small delay to ensure state is updated before navigation
+        // Use setTimeout to ensure localStorage is updated before redirect
         setTimeout(() => {
-          // Force page reload to ensure auth context is properly initialized with new tokens
-          window.location.href = response.user.role === 'admin' ? '/admin' : '/dashboard';
-        }, 300);
+          router.push("/dashboard")
+        }, 500)
       } else {
-        throw new Error(response.message || "Une erreur s'est produite");
+        console.error("❌ Login failed:", response.message)
+        toast({
+          title: "Erreur de connexion",
+          description: response.message || "Email ou mot de passe incorrect",
+          variant: "destructive",
+        })
       }
-    } catch (error: any) {
+    } catch (error) {
+      console.error("❌ Login exception:", error)
       toast({
-        title: "Échec de connexion",
-        description: error.response?.data?.message || error.message || "Email ou mot de passe incorrect.",
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de la connexion",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black to-background p-4">
-      <Card className="w-full max-w-md border-2 border-primary/20">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Motorcycle className="h-12 w-12 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">Connexion</CardTitle>
-          <CardDescription>Accédez à votre compte Moutouri</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="votre.email@exemple.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Mot de passe</Label>
-                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                  Mot de passe oublié?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+    <PublicLayout>
+      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+        <div className="flex flex-col space-y-2 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Connexion
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Entrez vos informations pour accéder à votre compte
+          </p>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="vous@exemple.com" 
+                      {...field} 
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mot de passe</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        {...field}
+                        disabled={isLoading}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3"
+                        onClick={() => setShowPassword(!showPassword)}
+                        disabled={isLoading}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                        <span className="sr-only">
+                          {showPassword ? "Masquer" : "Afficher"} le mot de passe
+                        </span>
+                      </Button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Connexion en cours..." : "Se connecter"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Connexion en cours...
+                </>
+              ) : (
+                "Se connecter"
+              )}
             </Button>
           </form>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <div className="text-center text-sm">
-            Vous n&apos;avez pas de compte?{" "}
-            <Link href="/register" className="text-primary hover:underline">
-              S&apos;inscrire
+        </Form>
+
+        <div className="text-sm text-center space-y-2">
+          <Link 
+            href="/forgot-password" 
+            className="text-sm underline text-primary/80 hover:text-primary"
+          >
+            Mot de passe oublié?
+          </Link>
+          <div className="text-muted-foreground">
+            Pas encore de compte?{" "}
+            <Link 
+              href="/register" 
+              className="text-primary/80 hover:text-primary underline underline-offset-4"
+            >
+              S'inscrire
             </Link>
           </div>
-          <Button variant="outline" asChild className="w-full">
-            <Link href="/">Retour à l&apos;Accueil</Link>
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </PublicLayout>
   )
 }
 

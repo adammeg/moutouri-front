@@ -41,7 +41,7 @@ export const registerUser = async (userData: {
 export const loginUser = async (credentials: { email: string; password: string }) => {
   try {
     console.log(`Attempting login for user: ${credentials.email}`);
-    const response = await axios.post(`https://moutouri-back.onrender.com/users/login`, credentials);
+    const response = await axios.post(`${API_URL}/users/login`, credentials);
     console.log('Login successful:', response.data);
     
     // Store tokens if login successful
