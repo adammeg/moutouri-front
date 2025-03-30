@@ -99,8 +99,7 @@ export default function AdminAdsPage() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [currentAd, setCurrentAd] = useState<Ad | null>(null);
     const [previewImage, setPreviewImage] = useState('');
-    const [accessToken, setAccessToken] = useState('');
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, getAuthToken } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
 
@@ -134,35 +133,23 @@ export default function AdminAdsPage() {
         try {
             console.log("Fetching ads...");
             
-            // Get the auth token from localStorage
-            const userString = localStorage.getItem('user');
-            if (!userString) {
-                console.error("No user found in localStorage");
-                toast({
-                    title: 'Erreur d\'authentification',
-                    description: 'Veuillez vous reconnecter',
-                    variant: 'destructive'
-                });
-                setLoading(false);
-                return;
-            }
-            
-            const user = JSON.parse(userString);
-            const token = user?.accessToken || user?.token;
+            // Get token directly from auth context
+            const token = user?.token || user?.accessToken || getAuthToken();
             
             if (!token) {
-                console.error("No token found in user object");
+                console.error("No auth token available");
                 toast({
                     title: 'Erreur d\'authentification',
-                    description: 'Token invalide, veuillez vous reconnecter',
+                    description: 'Veuillez vous reconnecter pour continuer',
                     variant: 'destructive'
                 });
                 setLoading(false);
                 return;
             }
             
-            // Make the API request with debugging
-            console.log(`Using token: ${token.substring(0, 15)}...`);
+            // Log token for debugging (first few chars only)
+            console.log(`Using token: ${token.substring(0, 10)}...`);
+            
             const response = await getAllAds(token);
             console.log("API response:", response);
             
@@ -242,7 +229,11 @@ export default function AdminAdsPage() {
         if (window.confirm('Êtes-vous sûr de vouloir supprimer cette publicité?')) {
             try {
                 setIsDeleting(true);
-                const response = await deleteAd(id, accessToken);
+                const token = user?.token || user?.accessToken || getAuthToken();
+                if (!token) {
+                    throw new Error("No authentication token available");
+                }
+                const response = await deleteAd(id, token);
 
                 if (response.success) {
                     toast({
@@ -290,18 +281,22 @@ export default function AdminAdsPage() {
                     formData.append('image', data.image);
                 }
                 
-                const response = await axios.put(
-                    `${API_URL}/ads/${currentAd._id}`, 
-                    formData,
-                    {
-                        headers: {
-                            'Content-Type': 'multipart/form-data',
-                            'Authorization': `Bearer ${accessToken}`
-                        }
-                    }
-                );
+                const token = user?.token || user?.accessToken || getAuthToken();
                 
-                if (response.data.success) {
+                if (!token) {
+                    toast({
+                        title: 'Erreur d\'authentification',
+                        description: 'Veuillez vous reconnecter pour continuer',
+                        variant: 'destructive'
+                    });
+                    setIsCreating(false);
+                    setIsUpdating(false);
+                    return;
+                }
+                
+                const response = await updateAd(currentAd._id, formData, token);
+                
+                if (response.success) {
                     toast({
                         title: 'Succès',
                         description: 'Publicité mise à jour avec succès',
@@ -311,7 +306,7 @@ export default function AdminAdsPage() {
                 } else {
                     toast({
                         title: 'Erreur',
-                        description: response.data.message || 'Impossible de mettre à jour la publicité',
+                        description: response.message || 'Impossible de mettre à jour la publicité',
                         variant: 'destructive'
                     });
                 }
@@ -344,18 +339,22 @@ export default function AdminAdsPage() {
                     formData.append('image', data.image);
                 }
                 
-                const response = await axios.post(
-                    `${API_URL}/ads`, 
-                    formData,
-                    {
-                        headers: {
-                            'Content-Type': 'multipart/form-data',
-                            'Authorization': `Bearer ${accessToken}`
-                        }
-                    }
-                );
+                const token = user?.token || user?.accessToken || getAuthToken();
                 
-                if (response.data.success) {
+                if (!token) {
+                    toast({
+                        title: 'Erreur d\'authentification',
+                        description: 'Veuillez vous reconnecter pour continuer',
+                        variant: 'destructive'
+                    });
+                    setIsCreating(false);
+                    setIsUpdating(false);
+                    return;
+                }
+                
+                const response = await createAd(formData, token);
+                
+                if (response.success) {
                     toast({
                         title: 'Succès',
                         description: 'Publicité créée avec succès',
@@ -365,7 +364,7 @@ export default function AdminAdsPage() {
                 } else {
                     toast({
                         title: 'Erreur',
-                        description: response.data.message || 'Impossible de créer la publicité',
+                        description: response.message || 'Impossible de créer la publicité',
                         variant: 'destructive'
                     });
                 }

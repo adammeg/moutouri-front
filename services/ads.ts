@@ -40,11 +40,11 @@ export const createAd = async (adData: FormData, token: string) => {
 
 export const updateAd = async (id: string, adData: FormData, token: string) => {
   try {
-    const response = await axios.put(`${API_URL}/ads/${id}`, {
+    const response = await axios.put(`${API_URL}/ads/${id}`, adData, {
       headers: {
-        Authorization: `Bearer ${token}`
-      },
-      body: adData
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
     });
     
     return response.data;
