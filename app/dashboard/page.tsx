@@ -28,9 +28,9 @@ export default function DashboardPage() {
         setIsLoading(true)
         
         // Only fetch if user is authenticated
-        if (user?.id) {
+        if (user) {
           // Fetch user's products
-          const userProductsResponse = await getUserProducts(user.id)
+          const userProductsResponse = await getUserProducts(user._id)
           setUserProducts(userProductsResponse.products || [])
           // Fetch latest products for featured section
           const latestProductsResponse = await getLatestProducts(4)
