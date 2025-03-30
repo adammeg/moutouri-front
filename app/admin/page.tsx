@@ -101,7 +101,7 @@ export default function AdminDashboardPage() {
                       <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
+                        <div className="text-2xl font-bold">{stats?.totalUsers}</div>
                       <p className="text-xs text-muted-foreground">
                         Utilisateurs enregistrés sur la plateforme
                       </p>
@@ -116,7 +116,7 @@ export default function AdminDashboardPage() {
                       <ShoppingBag className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{stats?.totalProducts || 0}</div>
+                      <div className="text-2xl font-bold">{stats?.totalProducts}</div>
                       <p className="text-xs text-muted-foreground">
                         Produits listés sur la plateforme
                       </p>
@@ -131,7 +131,7 @@ export default function AdminDashboardPage() {
                       <Tag className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{stats?.totalCategories || 0}</div>
+                      <div className="text-2xl font-bold">{stats?.totalCategories}</div>
                       <p className="text-xs text-muted-foreground">
                         Catégories disponibles
                       </p>
@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {stats?.recentProducts?.filter(p => !p.isVerified)?.length || 0}
+                        {stats?.recentProducts?.filter(p => !p.isVerified)?.length}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Produits en attente de vérification
