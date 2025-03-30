@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Loader2, Package, AlertCircle } from "lucide-react"
 import Image from 'next/image'
@@ -27,6 +27,8 @@ function ProductsContent() {
   const [isMounted, setIsMounted] = useState(false)
   const { toast } = useToast()
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const initialQuery = searchParams?.get('q') || ''
 
   useEffect(() => {
     setIsMounted(true);
@@ -97,10 +99,26 @@ function ProductsContent() {
     fetchCategoriesAndProducts()
   }, [toast, searchParams, isMounted])
 
-  const handleSearchResults = (results: any[], query: string) => {
-    setProducts(results)
-    setSearchQuery(query)
-  }
+  const handleSearch = (query: string) => {
+    setIsLoading(true);
+    // Create new URL with search params
+    const params = new URLSearchParams(searchParams?.toString());
+    
+    if (query) {
+      params.set('q', query);
+    } else {
+      params.delete('q');
+    }
+    
+    // Update category if present
+    const category = searchParams?.get('category');
+    if (category) {
+      params.set('category', category);
+    }
+    
+    // Navigate to new URL
+    router.push(`/products?${params.toString()}`);
+  };
 
   const handleTabChange = async (value: string) => {
     setActiveTab(value)
@@ -158,8 +176,11 @@ function ProductsContent() {
         </div>
         
         {/* Search bar */}
-        <div className="w-full">
-          <SearchBar searchQuery={searchQuery} onSearch={handleSearchResults} />
+        <div className="w-full sm:max-w-sm lg:max-w-lg xl:max-w-xl">
+          <SearchBar 
+            placeholder="Rechercher des motos, pièces..." 
+            onSearch={handleSearch}
+          />
         </div>
       </div>
 
@@ -193,7 +214,7 @@ function ProductsContent() {
             <TabsContent value="all" className="mt-6">
               {products.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {products.map((product: any) => (
                       <ProductCard 
                         key={product._id}
@@ -224,7 +245,7 @@ function ProductsContent() {
                     />
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {products.slice(4).map((product: any) => (
                       <ProductCard 
                         key={product._id}
@@ -251,7 +272,7 @@ function ProductsContent() {
             {categories.map((category) => (
               <TabsContent key={category._id} value={category._id} className="mt-6">
                 {getProductsByCategory(category._id).length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {getProductsByCategory(category._id).map((product: any) => (
                       <ProductCard 
                         key={product._id}

@@ -100,7 +100,7 @@ export default function AdminAdsPage() {
     const [currentAd, setCurrentAd] = useState<Ad | null>(null);
     const [previewImage, setPreviewImage] = useState('');
     const [accessToken, setAccessToken] = useState('');
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
 
@@ -119,25 +119,31 @@ export default function AdminAdsPage() {
 
     // Load ads when component mounts
     useEffect(() => {
-        if (!user || user.role !== 'admin') {
-            router.push('/dashboard');
-            return;
+        // Only fetch ads if the user is an admin
+        if (isAdmin) {
+            console.log("User is admin, fetching ads...");
+            fetchAds();
         } else {
-            setAccessToken(localStorage.getItem('accessToken') || '');
+            console.log("User is not admin, not fetching ads");
         }
-    }, [user, router]);
+    }, [isAdmin]);
 
     const fetchAds = async () => {
         setLoading(true);
+        
         try {
-            // Get the user from localStorage
+            console.log("Fetching ads...");
+            
+            // Get the auth token from localStorage
             const userString = localStorage.getItem('user');
             if (!userString) {
+                console.error("No user found in localStorage");
                 toast({
-                    title: 'Erreur',
-                    description: 'Utilisateur non authentifié',
+                    title: 'Erreur d\'authentification',
+                    description: 'Veuillez vous reconnecter',
                     variant: 'destructive'
                 });
+                setLoading(false);
                 return;
             }
             
@@ -145,18 +151,25 @@ export default function AdminAdsPage() {
             const token = user?.accessToken || user?.token;
             
             if (!token) {
+                console.error("No token found in user object");
                 toast({
-                    title: 'Erreur',
-                    description: 'Token non disponible',
+                    title: 'Erreur d\'authentification',
+                    description: 'Token invalide, veuillez vous reconnecter',
                     variant: 'destructive'
                 });
+                setLoading(false);
                 return;
             }
             
+            // Make the API request with debugging
+            console.log(`Using token: ${token.substring(0, 15)}...`);
             const response = await getAllAds(token);
+            console.log("API response:", response);
+            
             if (response.success) {
-                setAds(response.ads);
+                setAds(response.ads || []);
             } else {
+                console.error("API returned error:", response.message);
                 toast({
                     title: 'Erreur',
                     description: response.message || 'Impossible de récupérer les publicités',

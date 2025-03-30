@@ -78,18 +78,41 @@ export const deleteAd = async (id: string, token: string) => {
 
 export const getAllAds = async (token: string) => {
   try {
+    console.log("Making request to:", `${API_URL}/ads`);
+    console.log("With auth token:", token.substring(0, 15) + '...');
+    
     const response = await axios.get(`${API_URL}/ads`, {
       headers: {
-        Authorization: `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
     });
     
-    return response.data;
+    console.log("API response status:", response.status);
+    
+    // If we get here, the request was successful
+    return {
+      success: true,
+      ads: response.data.ads || [],
+      message: 'Ads retrieved successfully'
+    };
   } catch (error) {
     console.error('Error fetching all ads:', error);
+    
+    // Extract more detailed error information
+    const errorMessage = axios.isAxiosError(error) && error.response?.data?.message
+      ? error.response.data.message
+      : 'Could not fetch ads';
+    
+    const statusCode = axios.isAxiosError(error) && error.response?.status
+      ? error.response.status
+      : 'unknown';
+      
+    console.error(`API error (${statusCode}):`, errorMessage);
+    
     return {
       success: false,
-      message: 'Could not fetch ads',
+      message: errorMessage,
       ads: []
     };
   }

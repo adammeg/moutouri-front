@@ -2,10 +2,11 @@ import Link from 'next/link'
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { formatPrice } from "@/lib/utils"
-import { Heart, Eye } from "lucide-react"
+import { Heart, Eye, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import SafeImage from '@/components/safe-image'
 import { ReactNode } from 'react'
+import Image from 'next/image'
 
 export interface ProductCardProps {
   product: any
@@ -22,16 +23,17 @@ export function ProductCard({ product, actions, children }: ProductCardProps) {
                      (product.user?.email ? product.user.email.split('@')[0] : '');
 
   return (
-    <Card className="overflow-hidden h-full flex flex-col transition-all hover:shadow-md">
-      <Link href={`/products/${product._id}`} className="relative overflow-hidden aspect-square">
-        <SafeImage
-          src={product.images?.[0] || "/placeholder-product.svg"}
-          alt={product.title || "Product"}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover transition-transform hover:scale-105"
-          style={{ filter: 'none' }}
-        />
+    <Card className="overflow-hidden h-full flex flex-col">
+      <div className="relative aspect-[4/3] overflow-hidden">
+        <Link href={`/products/${product._id}`}>
+          <Image
+            src={product.images?.[0] || '/placeholder.png'}
+            alt={product.title}
+            className="object-cover transition-transform hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 25vw"
+          />
+        </Link>
         {product.condition && (
           <Badge 
             variant={product.condition === 'New' ? "default" : "outline"}
@@ -45,23 +47,20 @@ export function ProductCard({ product, actions, children }: ProductCardProps) {
             En vedette
           </Badge>
         )}
-      </Link>
-      <CardContent className="flex-1 p-4">
-        <div className="mb-2 flex items-start justify-between">
-          <Link href={`/products/${product._id}`} className="font-medium hover:underline">
+      </div>
+      <CardContent className="p-3 flex-grow flex flex-col">
+        <h3 className="font-semibold line-clamp-2 mb-1 text-sm sm:text-base">
+          <Link href={`/products/${product._id}`}>
             {product.title}
           </Link>
-          {product.price && (
-            <div className="text-right">
-              <div className="font-bold text-primary">{formatPrice(product.price)}</div>
-            </div>
-          )}
+        </h3>
+        <p className="text-primary font-bold mt-auto text-base sm:text-lg">
+          {product.price?.toLocaleString()} DT
+        </p>
+        <div className="flex items-center text-xs text-muted-foreground mt-2">
+          <MapPin className="h-3 w-3 mr-1" />
+          <span className="truncate">{product.location || 'Location N/A'}</span>
         </div>
-        {product.location && (
-          <div className="text-sm text-muted-foreground mb-2">
-            {product.location}
-          </div>
-        )}
         {sellerName && (
           <div className="text-sm text-muted-foreground mb-2">
             de {sellerName}

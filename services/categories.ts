@@ -14,12 +14,22 @@ export interface Category {
   updatedAt: string;
 }
 
-// Get all categories
+// Get all categories with better error handling
 export const getCategories = async () => {
-  console.log("Fetching all categories");
-  const response = await axios.get(`${API_URL}/categories`);
-  console.log("Categories response:", response.data);
-  return response.data;
+  try {
+    console.log("Fetching all categories");
+    const response = await axios.get(`${API_URL}/categories`);
+    console.log("Categories response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    // Return a standardized error response
+    return {
+      success: false,
+      message: 'Failed to fetch categories',
+      categories: [] // Empty array as fallback
+    };
+  }
 };
 
 // Get a single category by ID
