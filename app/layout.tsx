@@ -31,7 +31,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="google-adsense-account" content="ca-pub-8717268919598293"></meta>
+        <meta name="google-adsense-account" content="ca-pub-9017132503634604"></meta>
       </head>
       <body className={inter.className}>
         <AuthProvider>
@@ -42,10 +42,10 @@ export default function RootLayout({
         
         {/* Google AdSense Script */}
         <Script
-          id="pub-8717268919598293"
+          id="pub-9017132503634604"
           strategy="afterInteractive"
           crossOrigin="anonymous"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8717268919598293"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9017132503634604"
         />
       </body>
     </html>

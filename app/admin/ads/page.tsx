@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import axios from 'axios';
 
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
@@ -55,6 +56,9 @@ import {
     updateAd,
     deleteAd
 } from '@/services/ads';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
 
 // Define types for our ad and form data
 interface Ad {
@@ -231,74 +235,114 @@ export default function AdminAdsPage() {
         }
     };
 
-    const onSubmit = async (formData: FormData) => {
+    const onSubmit = async (data: FormData) => {
         try {
-            // Create FormData for file upload
-            const data = new FormData();
-            data.append('title', formData.title);
-            data.append('description', formData.description);
-            data.append('link', formData.link);
-            data.append('position', formData.position);
-            data.append('isActive', formData.isActive.toString());
-            data.append('startDate', formData.startDate);
-
-            if (formData.endDate) {
-                data.append('endDate', formData.endDate);
-            }
-
-            // Add image only if it's set
-            if (formData.image) {
-                data.append('image', formData.image);
-            }
-
             if (currentAd) {
-                // Update existing ad
                 setIsUpdating(true);
-                const response = await updateAd(currentAd._id, data, accessToken);
-
-                if (response.success) {
+                
+                // Create FormData object for API request
+                const formData = new FormData();
+                formData.append('title', data.title);
+                formData.append('description', data.description);
+                formData.append('link', data.link || '');
+                formData.append('position', data.position);
+                formData.append('isActive', data.isActive ? 'true' : 'false');
+                formData.append('startDate', data.startDate);
+                if (data.endDate) formData.append('endDate', data.endDate);
+                
+                // Only append image if a new one was selected
+                if (data.image && typeof data.image !== 'string') {
+                    formData.append('image', data.image);
+                }
+                
+                const response = await axios.put(
+                    `${API_URL}/ads/${currentAd._id}`, 
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    }
+                );
+                
+                if (response.data.success) {
                     toast({
                         title: 'Succès',
                         description: 'Publicité mise à jour avec succès',
                     });
-                    setDialogOpen(false);
                     fetchAds();
+                    setDialogOpen(false);
                 } else {
                     toast({
                         title: 'Erreur',
-                        description: response.message || 'Impossible de mettre à jour la publicité',
+                        description: response.data.message || 'Impossible de mettre à jour la publicité',
                         variant: 'destructive'
                     });
                 }
-                setIsUpdating(false);
             } else {
-                // Create new ad
                 setIsCreating(true);
-                const response = await createAd(data, accessToken);
-
-                if (response.success) {
+                
+                // Check if image is provided
+                if (!data.image) {
+                    toast({
+                        title: 'Erreur',
+                        description: 'Veuillez sélectionner une image',
+                        variant: 'destructive'
+                    });
+                    setIsCreating(false);
+                    return;
+                }
+                
+                // Create FormData object for API request
+                const formData = new FormData();
+                formData.append('title', data.title);
+                formData.append('description', data.description);
+                formData.append('link', data.link || '');
+                formData.append('position', data.position);
+                formData.append('isActive', data.isActive ? 'true' : 'false');
+                formData.append('startDate', data.startDate);
+                if (data.endDate) formData.append('endDate', data.endDate);
+                
+                // Append image file
+                if (data.image && typeof data.image !== 'string') {
+                    formData.append('image', data.image);
+                }
+                
+                const response = await axios.post(
+                    `${API_URL}/ads`, 
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    }
+                );
+                
+                if (response.data.success) {
                     toast({
                         title: 'Succès',
                         description: 'Publicité créée avec succès',
                     });
-                    setDialogOpen(false);
                     fetchAds();
+                    setDialogOpen(false);
                 } else {
                     toast({
                         title: 'Erreur',
-                        description: response.message || 'Impossible de créer la publicité',
+                        description: response.data.message || 'Impossible de créer la publicité',
                         variant: 'destructive'
                     });
                 }
-                setIsCreating(false);
             }
         } catch (error) {
-            console.error('Error submitting ad:', error);
+            console.error('Error submitting form:', error);
             toast({
                 title: 'Erreur',
-                description: 'Une erreur s\'est produite lors de la soumission',
+                description: 'Une erreur s\'est produite lors de l\'opération',
                 variant: 'destructive'
             });
+        } finally {
             setIsCreating(false);
             setIsUpdating(false);
         }
@@ -348,10 +392,15 @@ export default function AdminAdsPage() {
                                     <div className="md:flex">
                                         <div className="relative h-48 md:h-auto md:w-64 overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
                                             <Image
-                                                src={ad.image}
+                                                src={ad.image.startsWith('/') ? `${IMAGE_BASE_URL}${ad.image.slice(1)}` : ad.image}
                                                 alt={ad.title}
                                                 fill
                                                 className="object-cover"
+                                                onError={(e) => {
+                                                    // Fallback if image fails to load
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.src = '/placeholder-image.png';
+                                                }}
                                             />
                                             <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 text-white text-xs">
                                                 {ad.position === 'home-hero' && 'Accueil - Après Hero'}
