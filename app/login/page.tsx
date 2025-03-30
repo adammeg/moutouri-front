@@ -12,8 +12,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { loginUser, setAuthHeader } from "@/services/auth"
 
+import { loginUser } from "@/services/auth"
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -38,9 +38,10 @@ export default function LoginPage() {
         });
         
         // Store user info manually to ensure it's available
-        localStorage.setItem('user', JSON.stringify(response.user));
+        
+        /*localStorage.setItem('user', JSON.stringify(response.user));
         localStorage.setItem('accessToken', response.accessToken);
-        localStorage.setItem('refreshToken', response.refreshToken);
+        localStorage.setItem('refreshToken', response.refreshToken);*/
         
         // Add a small delay to ensure state is updated before navigation
         setTimeout(() => {
