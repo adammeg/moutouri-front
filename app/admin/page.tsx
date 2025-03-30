@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { BarChart4, Users, ShoppingBag, Tag, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
+import { BarChart4, Users, ShoppingBag, Tag, AlertCircle, CheckCircle, Loader2, ChevronRight } from "lucide-react"
 
 import DashboardLayout from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
@@ -11,17 +11,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
-import { AdminStats, getAdminStats } from "@/services/admin"
+import { AdminStats, getAdminStats, getAllUsers } from "@/services/admin"
 import ProtectedRoute from "@/components/protected-route"
+import UsersList from "@/components/admin/users-list"
+import StatsCard from "@/components/admin/stats-card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function AdminDashboardPage() {
   const { toast } = useToast()
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, getAuthToken } = useAuth()
   const router = useRouter()
   
   const [isLoading, setIsLoading] = useState(true)
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [activeTab, setActiveTab] = useState("overview")
+  const [error, setError] = useState<string | null>(null)
+  const [users, setUsers] = useState<any[]>([])
 
   useEffect(() => {
     // Redirect non-admin users
@@ -36,31 +41,66 @@ export default function AdminDashboardPage() {
 
     const fetchAdminData = async () => {
       try {
+        console.log("🔍 Starting admin data fetch...")
         setIsLoading(true)
+        setError(null)
         
-        // Fetch admin statistics
+        // Log authentication state
+        console.log("🔐 Auth state:", { 
+          isAuthenticated: !!user, 
+          isAdmin, 
+          tokenExists: !!(user?.token || user?.accessToken || getAuthToken())
+        })
+        
+        // Get admin stats
         const statsResponse = await getAdminStats()
+        console.log("📊 Admin stats response:", statsResponse)
+        
         if (statsResponse.success) {
+          console.log("✅ Stats fetched successfully:", statsResponse.data)
           setStats(statsResponse.data)
         } else {
-          throw new Error(statsResponse.message || "Erreur lors du chargement des statistiques")
+          console.error("❌ Failed to fetch stats:", statsResponse.message)
+          setError(statsResponse.message || "Failed to fetch admin statistics")
+          toast({
+            title: "Error",
+            description: statsResponse.message || "Failed to fetch admin statistics",
+            variant: "destructive"
+          })
+        }
+        
+        // Get users list
+        console.log("👥 Fetching users...")
+        const usersResponse = await getAllUsers()
+        console.log("👤 Users response:", usersResponse)
+        
+        if (usersResponse.success) {
+          setUsers(usersResponse.users || [])
+        } else {
+          console.error("❌ Failed to fetch users:", usersResponse.message)
+          toast({
+            title: "Warning",
+            description: "Could not load users list",
+            variant: "destructive"
+          })
         }
       } catch (error) {
-        console.error("Error fetching admin data:", error)
+        console.error("❌ Error fetching admin data:", error)
+        setError("An unexpected error occurred")
         toast({
-          title: "Erreur",
-          description: "Impossible de charger les données administrateur. Veuillez réessayer.",
-          variant: "destructive",
+          title: "Error",
+          description: "Failed to load admin dashboard data",
+          variant: "destructive"
         })
       } finally {
         setIsLoading(false)
       }
     }
 
-    if (isAdmin) {
+    if (isAdmin && !isLoading) {
       fetchAdminData()
     }
-  }, [isAdmin, user, router, toast])
+  }, [isAdmin, user, router, toast, getAuthToken])
 
   if (!isAdmin) {
     return null
@@ -88,72 +128,45 @@ export default function AdminDashboardPage() {
 
             <TabsContent value="overview" className="mt-6">
               {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <div className="flex justify-center items-center p-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span className="ml-2">Chargement des statistiques...</span>
                 </div>
+              ) : error ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Erreur</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Utilisateurs
-                      </CardTitle>
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-                      <p className="text-xs text-muted-foreground">
-                        Utilisateurs inscrits
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <StatsCard
+                    title="Utilisateurs"
+                    value={stats?.totalUsers || 0}
+                    description="Utilisateurs inscrits"
+                    icon={<Users className="h-4 w-4" />}
+                  />
                   
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Produits
-                      </CardTitle>
-                      <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{stats?.totalProducts || 0}</div>
-                      <p className="text-xs text-muted-foreground">
-                        Produits publiés
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <StatsCard
+                    title="Produits"
+                    value={stats?.totalProducts || 0}
+                    description="Produits publiés"
+                    icon={<ShoppingBag className="h-4 w-4" />}
+                  />
                   
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Catégories
-                      </CardTitle>
-                      <Tag className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{stats?.totalCategories || 0}</div>
-                      <p className="text-xs text-muted-foreground">
-                        Catégories disponibles
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <StatsCard
+                    title="Catégories"
+                    value={stats?.totalCategories || 0}
+                    description="Catégories disponibles"
+                    icon={<Tag className="h-4 w-4" />}
+                  />
                   
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        À Vérifier
-                      </CardTitle>
-                      <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {stats?.pendingListings || 0}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Produits en attente de vérification
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <StatsCard
+                    title="À Vérifier"
+                    value={stats?.pendingListings || 0}
+                    description="Produits en attente de vérification"
+                    icon={<AlertCircle className="h-4 w-4" />}
+                  />
                 </div>
               )}
               
@@ -161,9 +174,7 @@ export default function AdminDashboardPage() {
             </TabsContent>
             
             <TabsContent value="users" className="mt-6">
-              {/* Users table and management interface */}
-              <h2 className="text-xl font-semibold mb-4">Gestion des Utilisateurs</h2>
-              {/* Table of users would go here */}
+              <UsersList users={users} isLoading={isLoading} />
             </TabsContent>
             
             <TabsContent value="products" className="mt-6">

@@ -13,7 +13,7 @@ export default function ProtectedRoute({
   children, 
   adminOnly = false 
 }: ProtectedRouteProps) {
-  const { user, loading: isLoading, isAdmin } = useAuth();
+  const { user, isLoading, isAdmin } = useAuth();
   const router = useRouter();
   
   // Consider the user authenticated if the user object exists
