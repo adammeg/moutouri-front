@@ -14,9 +14,8 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
 import { getUserProfile, updateUserProfile, updateUserPassword, uploadProfilePicture } from "@/services/user"
 import ProtectedRoute from "@/components/protected-route"
-
 export default function ProfilePage() {
-  const { user: authUser, updateUser } = useAuth()
+  const { user: authUser } = useAuth()
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -40,11 +39,11 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (!authUser?.id) return
+      if (!authUser?._id) return
 
       try {
         setIsLoading(true)
-        const response = await getUserProfile(authUser.id)
+        const response = await getUserProfile(authUser._id)
 
         if (response.success) {
           setUser({
@@ -71,12 +70,12 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!authUser?.id) return
+    if (!authUser?._id) return
 
     setIsSaving(true)
 
     try {
-      const response = await updateUserProfile(authUser.id, {
+      const response = await updateUserProfile(authUser._id, {
         firstName: user.firstName,
         lastName: user.lastName,
       })
@@ -87,10 +86,13 @@ export default function ProfilePage() {
           description: "Vos informations ont été mises à jour avec succès.",
         })
 
-        updateUser({
-          firstName: user.firstName,
-          lastName: user.lastName,
-        })
+        // Update the user in the auth context if available
+        if (typeof window !== 'undefined' && authUser && 'updateUser' in authUser) {
+          (authUser as any).updateUser({
+            firstName: user.firstName,
+            lastName: user.lastName,
+          });
+        }
       } else {
         throw new Error(response.message || "Une erreur s'est produite")
       }
@@ -108,7 +110,7 @@ export default function ProfilePage() {
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!authUser?.id) return
+    if (!authUser?._id) return
 
     // Validate passwords match
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -123,7 +125,7 @@ export default function ProfilePage() {
     setIsChangingPassword(true)
 
     try {
-      const response = await updateUserPassword(authUser.id, {
+      const response = await updateUserPassword(authUser._id, {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       })
@@ -160,12 +162,12 @@ export default function ProfilePage() {
   }
 
   const handleImageUpload = async (file: File) => {
-    if (!authUser?.id) return
+    if (!authUser?._id) return
 
     try {
       setIsUploading(true)
 
-      const response = await uploadProfilePicture(authUser.id, file)
+      const response = await uploadProfilePicture(authUser._id, file)
 
       if (response.success) {
         setUser({
@@ -173,9 +175,12 @@ export default function ProfilePage() {
           profileImage: response.imageUrl
         })
 
-        updateUser({
-          image: response.imageUrl
-        })
+        // Update the user in the auth context if available
+        if (typeof window !== 'undefined' && authUser && 'updateUser' in authUser) {
+          (authUser as any).updateUser({
+            image: response.imageUrl
+          });
+        }
 
         toast({
           title: "Photo de profil mise à jour",
