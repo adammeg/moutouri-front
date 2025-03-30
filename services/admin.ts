@@ -8,28 +8,77 @@ export interface AdminStats {
   totalCategories: number;
   recentUsers: any[];
   recentProducts: any[];
-  productsByCategory: any[];
-  monthlyRegistrations: any[];
-  monthlySales: any[];
+  productsPerCategory: any[];
+  activeListings: number;
+  pendingListings: number;
 }
 
 // Get admin dashboard statistics
 export const getAdminStats = async () => {
   try {
-    const response = await axios.get(`${API_URL}/admin/stats`);
-    return response.data;
+    // Get user token from localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const token = user?.accessToken || user?.token;
+    
+    if (!token) {
+      console.error('No authentication token found');
+      return { 
+        success: false, 
+        message: 'No authentication token' 
+      };
+    }
+    
+    console.log('Fetching admin stats with token:', token.substring(0, 15) + '...');
+    
+    const response = await axios.get(`${API_URL}/admin/stats`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    
+    // Log the response for debugging
+    console.log('Admin stats response:', response.data);
+    
+    return {
+      success: true,
+      data: response.data,
+      message: 'Admin stats retrieved successfully'
+    };
   } catch (error) {
-    console.error("Error fetching admin stats:", error);
-    throw error;
+    console.error('Error fetching admin stats:', error);
+    
+    // Extract more detailed error information
+    const errorMessage = axios.isAxiosError(error) && error.response?.data?.message
+      ? error.response.data.message
+      : 'Could not retrieve admin statistics';
+      
+    return {
+      success: false,
+      message: errorMessage
+    };
   }
 };
 
 // Get all users (admin only)
-export const getAllUsers = async (params = {}) => {
-  const response = await axios.get(`${API_URL}/users`, { 
-    params 
-  });
-  return response.data;
+export const getAllUsers = async () => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const token = user?.accessToken || user?.token;
+    
+    const response = await axios.get(`${API_URL}/admin/users`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return {
+      success: false,
+      message: 'Could not fetch users'
+    };
+  }
 };
 
 // Get all products for admin

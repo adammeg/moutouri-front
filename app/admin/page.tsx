@@ -92,18 +92,18 @@ export default function AdminDashboardPage() {
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
-                        Utilisateurs Total
+                        Utilisateurs
                       </CardTitle>
                       <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats?.totalUsers}</div>
+                      <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
                       <p className="text-xs text-muted-foreground">
-                        Utilisateurs enregistrés sur la plateforme
+                        Utilisateurs inscrits
                       </p>
                     </CardContent>
                   </Card>
@@ -111,14 +111,14 @@ export default function AdminDashboardPage() {
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
-                        Produits Total
+                        Produits
                       </CardTitle>
                       <ShoppingBag className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{stats?.totalProducts}</div>
+                      <div className="text-2xl font-bold">{stats?.totalProducts || 0}</div>
                       <p className="text-xs text-muted-foreground">
-                        Produits listés sur la plateforme
+                        Produits publiés
                       </p>
                     </CardContent>
                   </Card>
@@ -131,7 +131,7 @@ export default function AdminDashboardPage() {
                       <Tag className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{stats?.totalCategories}</div>
+                      <div className="text-2xl font-bold">{stats?.totalCategories || 0}</div>
                       <p className="text-xs text-muted-foreground">
                         Catégories disponibles
                       </p>
@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {stats?.recentProducts?.filter(p => !p.isVerified)?.length}
+                        {stats?.pendingListings || 0}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Produits en attente de vérification

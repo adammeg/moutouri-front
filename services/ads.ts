@@ -1,4 +1,4 @@
- // Create a service for the ads API
+// Create a service for the ads API
 import { API_URL } from '@/config/config';
 import axios from 'axios';
 // Get ads by position
@@ -21,11 +21,11 @@ export const getAdsByPosition = async (position: string) => {
 // Admin functions - Create, update, delete ads
 export const createAd = async (adData: FormData, token: string) => {
   try {
-    const response = await axios.post(`${API_URL}/ads`, {
+    const response = await axios.post(`${API_URL}/ads`, adData, {
       headers: {
-        Authorization: `Bearer ${token}`
-      },
-      body: adData
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
     });
     
     return response.data;

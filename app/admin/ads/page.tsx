@@ -128,16 +128,38 @@ export default function AdminAdsPage() {
     }, [user, router]);
 
     const fetchAds = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
-            const response = await getAllAds(accessToken);
-
+            // Get the user from localStorage
+            const userString = localStorage.getItem('user');
+            if (!userString) {
+                toast({
+                    title: 'Erreur',
+                    description: 'Utilisateur non authentifié',
+                    variant: 'destructive'
+                });
+                return;
+            }
+            
+            const user = JSON.parse(userString);
+            const token = user?.accessToken || user?.token;
+            
+            if (!token) {
+                toast({
+                    title: 'Erreur',
+                    description: 'Token non disponible',
+                    variant: 'destructive'
+                });
+                return;
+            }
+            
+            const response = await getAllAds(token);
             if (response.success) {
                 setAds(response.ads);
             } else {
                 toast({
                     title: 'Erreur',
-                    description: response.message || 'Impossible de charger les publicités',
+                    description: response.message || 'Impossible de récupérer les publicités',
                     variant: 'destructive'
                 });
             }
@@ -145,7 +167,7 @@ export default function AdminAdsPage() {
             console.error('Error fetching ads:', error);
             toast({
                 title: 'Erreur',
-                description: 'Une erreur s\'est produite lors du chargement des publicités',
+                description: 'Une erreur est survenue lors de la récupération des publicités',
                 variant: 'destructive'
             });
         } finally {
