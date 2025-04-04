@@ -15,6 +15,7 @@ interface User {
   token?: string
   accessToken?: string
   image?: string
+  isAdmin?: boolean
 }
 
 interface AuthContextType {
@@ -107,181 +108,215 @@ axiosInstance.interceptors.response.use(
 // Create auth context
 const AuthContext = createContext<AuthContextType | null>(null)
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
-  
-  // Check if user is admin
-  const isAdmin = user?.role === 'admin'
-  
-  // Initialize auth state
+
+  // Initialize authentication state from localStorage
   useEffect(() => {
-    const loadUser = async () => {
+    const initializeAuth = () => {
       try {
-        const storedUser = localStorage.getItem('user');
+        setIsLoading(true)
         
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
+        // Get user from localStorage
+        const userStr = localStorage.getItem('user')
+        console.log('🔍 Checking stored user:', userStr ? 'Found' : 'Not found')
+        
+        if (userStr) {
+          // Parse the user data
+          const userData = JSON.parse(userStr)
           
-          // Check if the token exists
-          const token = userData.accessToken || userData.token;
+          // Extract token from user data or separate storage
+          const accessToken = localStorage.getItem('accessToken')
+          const refreshToken = localStorage.getItem('refreshToken')
+          const token = userData.token || accessToken
           
+          console.log('🔑 Token found:', token ? 'Yes' : 'No')
+          console.log('📋 User data keys:', Object.keys(userData))
+          
+          // Create a properly structured user object
+          const normalizedUser: User = {
+            _id: userData.id || userData._id,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            email: userData.email,
+            role: userData.role,
+            token: token || undefined,
+            accessToken: accessToken || undefined,
+            image: userData.image,
+            isAdmin: userData.role === 'admin'
+          }
+          console.log('✅ User ID:', normalizedUser._id)
+          
+          // Set auth state
+          setUser(normalizedUser)
+          setIsAdmin(normalizedUser.role === 'admin')
+          
+          // Set axios auth header if token exists
           if (token) {
-            console.log("✅ Found stored user with token");
-            
-            // Validate token by fetching profile
-            try {
-              const response = await axios.get(`${API_URL}/users/profile`, {
-                headers: {
-                  Authorization: `Bearer ${token}`
-                }
-              });
-              
-              console.log("✅ Profile fetch successful, updating user");
-              
-              // Update user data with the most current info from the server
-              const updatedUserData = {
-                ...userData,
-                ...response.data.user
-              };
-              
-              // Make sure we preserve the token
-              if (!updatedUserData.accessToken && !updatedUserData.token) {
-                updatedUserData.token = token;
-              }
-              
-              // Update localStorage with fresh data
-              localStorage.setItem('user', JSON.stringify(updatedUserData));
-              setUser(updatedUserData);
-            } catch (error) {
-              console.error("❌ Token validation failed, logging out", error);
-              // Token invalid, clear it
-              localStorage.removeItem('user');
-              setUser(null);
-            }
-          } else {
-            console.error("❌ No token found in stored user data");
-            localStorage.removeItem('user');
-            setUser(null);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
           }
         } else {
-          console.log("❓ No stored user found");
-          setUser(null);
+          setUser(null)
+          setIsAdmin(false)
         }
       } catch (error) {
-        console.error("❌ Error loading user:", error);
-        setUser(null);
+        console.error('Error initializing auth state:', error)
+        setUser(null)
+        setIsAdmin(false)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
-
-    loadUser();
-  }, [])
-  
-  // Login function
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
+    }
     
+    initializeAuth()
+  }, [])
+
+  // Login handler
+  const login = async (email: string, password: string) => {
     try {
-      console.log(`🔒 Logging in user: ${email}`);
-      const response = await axios.post(`${API_URL}/users/login`, {
-        email,
-        password
-      });
+      setIsLoading(true)
+      const response = await axios.post(`${API_URL}/users/login`, { email, password })
       
-      console.log('👤 Login response:', response.data);
+      console.log('Login response:', response.data)
       
       if (response.data.success) {
-        const userData = response.data.user;
-        const token = userData.token || userData.accessToken;
+        const userData = response.data.user
+        const token = response.data.token || response.data.accessToken
         
-        if (!token) {
-          console.error('❌ No token in response data');
-          return { 
-            success: false, 
-            message: 'Authentication failed: No token provided by server' 
-          };
+        // Create the complete user object with token, ensuring _id is set correctly
+        const completeUser = {
+          ...userData,
+          _id: userData.id || userData._id,
+          token: token,
+          isAdmin: userData.role === 'admin'
         }
         
-        // Ensure we have an object that's safe to store
-        const userToStore = {
-          ...userData,
-          token: token // Ensure token is included
-        };
+        console.log('✅ Login - User ID:', completeUser._id)
         
-        console.log('💾 Storing user data:', userToStore);
+        // Set auth state
+        setUser(completeUser)
+        setIsAdmin(completeUser.isAdmin)
         
-        // Save user to state and localStorage
-        setUser(userToStore);
-        localStorage.setItem('user', JSON.stringify(userToStore));
+        // Save user data to localStorage
+        localStorage.setItem('user', JSON.stringify(completeUser))
         
-        console.log('✅ User stored successfully');
-        return { success: true, message: 'Login successful' };
+        // Save tokens separately if needed
+        if (response.data.accessToken) {
+          localStorage.setItem('accessToken', response.data.accessToken)
+        }
+        if (response.data.refreshToken) {
+          localStorage.setItem('refreshToken', response.data.refreshToken)
+        }
+        
+        // Set axios auth header
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        
+        return { success: true, message: 'Login successful' }
       } else {
-        console.error('❌ Login failed:', response.data.message);
-        return { 
-          success: false, 
-          message: response.data.message || 'Invalid email or password' 
-        };
+        return { success: false, message: response.data.message || 'Login failed' }
       }
-    } catch (error: any) {
-      console.error('🚨 Login error:', error);
-      const errorMessage = 
-        error.response?.data?.message || 
-        error.message || 
-        'An error occurred during login';
-      
-      return { success: false, message: errorMessage };
-    } finally {
-      setIsLoading(false);
-    }
-  }
-  
-  // Register function
-  const register = async (userData: any) => {
-    setIsLoading(true);
-    
-    try {
-      const response = await axios.post(`${API_URL}/users/register`, userData);
-      
-      const { success, message } = response.data;
-      
-      return { success, message };
-    } catch (error: any) {
-      console.error('Registration error:', error);
+    } catch (error) {
+      console.error('Login error:', error)
       return { 
         success: false, 
-        message: error.response?.data?.message || 'An error occurred during registration' 
-      };
+        message: axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message 
+          : 'Connection error' 
+      }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   }
-  
-  // Logout function
-  const logout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
-    router.push('/login');
+
+  // Register handler
+  const register = async (userData: any) => {
+    try {
+      setIsLoading(true)
+      const response = await axios.post(`${API_URL}/users/register`, userData)
+      
+      if (response.data.success) {
+        const token = response.data.token || response.data.accessToken
+        
+        // Create complete user object with token
+        const user = {
+          ...response.data.user,
+          token: token,
+          isAdmin: response.data.user.role === 'admin'
+        }
+        
+        // Set auth state
+        setUser(user)
+        setIsAdmin(user.isAdmin)
+        
+        // Save user data and tokens
+        localStorage.setItem('user', JSON.stringify(user))
+        
+        if (response.data.accessToken) {
+          localStorage.setItem('accessToken', response.data.accessToken)
+        }
+        if (response.data.refreshToken) {
+          localStorage.setItem('refreshToken', response.data.refreshToken)
+        }
+        
+        // Set axios auth header
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        
+        return { success: true, message: 'Registration successful' }
+      } else {
+        return { success: false, message: response.data.message || 'Registration failed' }
+      }
+    } catch (error) {
+      console.error('Registration error:', error)
+      return { 
+        success: false, 
+        message: axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message 
+          : 'Connection error' 
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
-  
-  // Helper to get current auth token
+
+  // Logout handler
+  const logout = () => {
+    // Clear auth state
+    setUser(null)
+    setIsAdmin(false)
+    
+    // Clear localStorage
+    localStorage.removeItem('user')
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    
+    // Clear axios auth header
+    delete axios.defaults.headers.common['Authorization']
+    
+    // Redirect to login page
+    router.push('/login')
+  }
+
+  // Get auth token helper
   const getAuthToken = (): string | null => {
     try {
-      const storedUser = localStorage.getItem('user');
+      const storedUser = localStorage.getItem('user')
+      const accessToken = localStorage.getItem('accessToken')
+      
       if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        return userData.accessToken || userData.token || null;
+        const userData = JSON.parse(storedUser)
+        return userData.token || accessToken || null
       }
-      return null;
+      
+      return accessToken || null
     } catch (error) {
-      console.error("Error retrieving auth token:", error);
-      return null;
+      console.error('Error retrieving auth token:', error)
+      return null
     }
   }
-  
+
   return (
     <AuthContext.Provider
       value={{
@@ -301,11 +336,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 }
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider')
   }
   
-  return context;
+  return context
 } 

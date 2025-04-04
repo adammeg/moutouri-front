@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, use } from "react"
 import Image from "next/image"
 import { Camera, LoaderCircle } from "lucide-react"
 
@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
 import { getUserProfile, updateUserProfile, updateUserPassword, uploadProfilePicture } from "@/services/user"
 import ProtectedRoute from "@/components/protected-route"
+import { getUserProducts } from "@/services/products"
+
 export default function ProfilePage() {
   const { user: authUser } = useAuth()
   const { toast } = useToast()
@@ -23,19 +25,22 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false)
 
   const [user, setUser] = useState({
+    _id: "",
     firstName: "",
     lastName: "",
     email: "",
     profileImage: "/placeholder.svg?height=200&width=200",
   })
-
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   })
+
+  const [userProducts, setUserProducts] = useState([])
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -47,11 +52,13 @@ export default function ProfilePage() {
 
         if (response.success) {
           setUser({
-            firstName: response.user.firstName || "",
-            lastName: response.user.lastName || "",
-            email: response.user.email || "",
-            profileImage: response.user.image || "/placeholder.svg?height=200&width=200",
+            _id: authUser._id,
+            firstName: authUser.firstName || "",
+            lastName: authUser.lastName || "",
+            email: authUser.email || "",
+            profileImage: authUser.image || "/placeholder.svg?height=200&width=200",
           })
+          await fetchUserProducts()
         }
       } catch (error) {
         console.error("Error fetching user profile:", error)
@@ -67,6 +74,28 @@ export default function ProfilePage() {
 
     fetchUserProfile()
   }, [authUser, toast])
+
+  const fetchUserProducts = async () => {
+    if (!user || !user._id) {
+      console.warn("Cannot fetch products: No user available or missing _id")
+      return
+    }
+    
+    try {
+      console.log("📊 Fetching products for user ID:", user._id)
+      setIsLoadingProducts(true)
+      const result = await getUserProducts(user._id)
+      if (result.success) {
+        setUserProducts(result.products || [])
+      } else {
+        console.error("Failed to fetch user products:", result.message)
+      }
+    } catch (error) {
+      console.error("Error fetching user products:", error)
+    } finally {
+      setIsLoadingProducts(false)
+    }
+  }
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,7 +120,7 @@ export default function ProfilePage() {
           (authUser as any).updateUser({
             firstName: user.firstName,
             lastName: user.lastName,
-          });
+          })
         }
       } else {
         throw new Error(response.message || "Une erreur s'est produite")
@@ -179,7 +208,7 @@ export default function ProfilePage() {
         if (typeof window !== 'undefined' && authUser && 'updateUser' in authUser) {
           (authUser as any).updateUser({
             image: response.imageUrl
-          });
+          })
         }
 
         toast({

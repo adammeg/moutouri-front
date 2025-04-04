@@ -1,218 +1,233 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { BikeIcon, Package, PlusCircle, Settings, Trash2, Plus, Check, AlertCircle, Loader2 } from "lucide-react"
 
-import DashboardLayout from "@/components/dashboard-layout"
-import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import DashboardLayout from "@/components/dashboard-layout"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
-import { getUserProducts, deleteProduct } from "@/services/products"
-import { getLatestProducts } from "@/services/products"
+import { getUserProducts } from "@/services/products"
+import { getLatestProducts, deleteProduct } from "@/services/products"
 import ProtectedRoute from "@/components/protected-route"
-import { SearchBar } from "@/components/search-bar"
-import { createProductWithImages } from '@/services/client-products'
+import { ProductCard } from "@/components/product-card"
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const { toast } = useToast()
+  const router = useRouter()
+  
   const [userProducts, setUserProducts] = useState([])
   const [featuredProducts, setFeaturedProducts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-
+  const [error, setError] = useState<string | null>(null)
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null)
+  
   useEffect(() => {
     const fetchData = async () => {
+      if (authLoading) {
+        console.log("Auth is still loading, waiting...");
+        return;
+      }
+      
+      console.log("Dashboard - User state:", user ? `User ID: ${user._id}` : "No user");
+      setIsLoading(true)
+      
       try {
-        setIsLoading(true)
-        
-        // Only fetch if user is authenticated
-        if (user) {
+        if (user && user._id) {
+          console.log("Fetching products for user:", user._id);
+          
           // Fetch user's products
           const userProductsResponse = await getUserProducts(user._id)
-          setUserProducts(userProductsResponse.products || [])
+          if (userProductsResponse.success) {
+            setUserProducts(userProductsResponse.products || [])
+          } else {
+            console.error("Error fetching user products:", userProductsResponse.message);
+            setError(userProductsResponse.message || 'Failed to fetch your products')
+          }
+          
           // Fetch latest products for featured section
           const latestProductsResponse = await getLatestProducts(4)
           setFeaturedProducts(latestProductsResponse.products || [])
+        } else {
+          console.log("⚠️ Not fetching products - no user ID available");
+          setError("User information not available. Please log in again.");
         }
       } catch (error) {
-        console.error("Error fetching dashboard data:", error)
+        console.error('Dashboard fetch error:', error)
         toast({
-          title: "Erreur",
-          description: "Impossible de charger vos données. Veuillez réessayer.",
+          title: "Error",
+          description: "Failed to load dashboard data",
           variant: "destructive",
         })
       } finally {
         setIsLoading(false)
       }
     }
-
+    
     fetchData()
-  }, [user, toast])
+  }, [user, authLoading, toast])
+
   // Function to handle product deletion
   const handleDeleteProduct = async (productId: string) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible.")) {
-      try {
-        const response = await deleteProduct(productId);
-        if (response.success) {
-          toast({
-            title: "Produit supprimé",
-            description: "Votre annonce a été supprimée avec succès.",
-          });
-          
-          // Update the products list
-          setUserProducts(userProducts.filter((product: any) => product._id !== productId));
-        } else {
-          throw new Error(response.message || "Erreur lors de la suppression");
-        }
-      } catch (error) {
-        console.error("Error deleting product:", error);
+    try {
+      setDeletingProductId(productId)
+      
+      const response = await deleteProduct(productId)
+      
+      if (response.success) {
+        // Remove the deleted product from state
+        setUserProducts(userProducts.filter((product: any) => product._id !== productId))
+        
+        toast({
+          title: "Succès",
+          description: "Votre produit a été supprimé",
+          variant: "default",
+        })
+      } else {
         toast({
           title: "Erreur",
-          description: "Impossible de supprimer ce produit. Veuillez réessayer.",
+          description: response.message || "Échec de la suppression du produit",
           variant: "destructive",
-        });
+        })
       }
+    } catch (error) {
+      console.error('Error deleting product:', error)
+      toast({
+        title: "Erreur",
+        description: "Échec de la suppression du produit",
+        variant: "destructive",
+      })
+    } finally {
+      setDeletingProductId(null)
     }
   }
 
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            <Card className="flex-1">
-              <CardHeader>
-                <CardTitle>Bienvenue, {user?.firstName || "Utilisateur"}</CardTitle>
-                <CardDescription>Voici ce qui se passe sur votre compte Moutouri</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-muted p-4 rounded-lg">
-                    <p className="text-sm font-medium">Vos Annonces</p>
-                    <p className="text-2xl font-bold">{userProducts.length}</p>
-                  </div>
-                  <div className="bg-muted p-4 rounded-lg">
-                    <p className="text-sm font-medium">Articles Sauvegardés</p>
-                    <p className="text-2xl font-bold">0</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="flex-1">
-              <CardHeader>
-                <CardTitle>Actions Rapides</CardTitle>
-                <CardDescription>Tâches courantes que vous pourriez vouloir effectuer</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Button className="w-full" asChild>
-                    <Link href="/products/new">Publier une Annonce</Link>
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    <Link href="/products">Parcourir les Motos</Link> 
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    <Link href="/profile">Modifier le Profil</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold tracking-tight">Tableau de bord</h1>
+            <Button asChild>
+              <Link href="/products/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Publier une Annonce
+              </Link>
+            </Button>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Annonces en Vedette</CardTitle>
-              <CardDescription>Articles populaires de notre communauté</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="h-64 bg-muted rounded-lg animate-pulse"></div>
-                  ))}
-                </div>
-              ) : featuredProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          {isLoading ? (
+            <div className="flex justify-center p-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <Card className="border-destructive">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <AlertCircle className="mr-2 h-5 w-5 text-destructive" />
+                  Erreur
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>{error}</p>
+              </CardContent>
+              <CardFooter>
+                <Button variant="outline" onClick={() => window.location.reload()}>
+                  Réessayer
+                </Button>
+              </CardFooter>
+            </Card>
+          ) : (
+            <Tabs defaultValue="my-listings" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="my-listings">Mes Annonces</TabsTrigger>
+                <TabsTrigger value="featured">Annonces Populaires</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="my-listings">
+                {userProducts.length === 0 ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Aucune annonce</CardTitle>
+                      <CardDescription>
+                        Vous n'avez pas encore publié d'annonces.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Publiez votre première annonce pour commencer à vendre vos produits.
+                      </p>
+                    </CardContent>
+                    <CardFooter>
+                      <Button asChild>
+                        <Link href="/products/new">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Publier une Annonce
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {userProducts.map((product: any) => (
+                      <Card key={product._id} className="overflow-hidden">
+                        <CardHeader className="p-0">
+                          <div className="aspect-video relative w-full overflow-hidden">
+                            <img
+                              src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder.png'}
+                              alt={product.title}
+                              className="object-cover w-full h-full transition-all hover:scale-105"
+                            />
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <CardTitle className="text-lg">{product.title}</CardTitle>
+                          <p className="text-primary font-bold mt-1">
+                            {product.price.toLocaleString('fr-TN')} DT
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                            {product.description}
+                          </p>
+                        </CardContent>
+                        <CardFooter className="flex justify-between p-4 pt-0 border-t-0">
+                          <Button variant="outline" asChild>
+                            <Link href={`/products/${product._id}`}>
+                              Voir
+                            </Link>
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="featured">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {featuredProducts.map((product: any) => (
                     <ProductCard key={product._id} product={product} />
                   ))}
                 </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-6">
-                  Aucune annonce disponible actuellement.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Vos Annonces</CardTitle>
-              <CardDescription>Gérez vos annonces publiées</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {[1, 2].map(i => (
-                    <div key={i} className="h-64 bg-muted rounded-lg animate-pulse"></div>
-                  ))}
-                </div>
-              ) : userProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {userProducts.map((product: any) => (
-                    <ProductCard 
-                      key={product._id} 
-                      product={product} 
-                      actions={
-                        <div className="flex gap-2 mt-2">
-                          <Button size="sm" variant="outline" asChild className="flex-1">
-                            <Link href={`/products/edit/${product._id}`}>Modifier</Link>
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="destructive" 
-                            className="flex-1" 
-                            onClick={() => handleDeleteProduct(product._id)}
-                          >
-                            Supprimer
-                          </Button>
-                        </div>
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-10">
-                  <p className="text-muted-foreground mb-4">Vous n'avez pas encore d'annonces.</p>
-                  <Button asChild>
-                    <Link href="/products/new">Publier votre première annonce</Link>
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Activité Récente</CardTitle>
-              <CardDescription>Dernières mises à jour de votre compte</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {isLoading ? (
-                  [1, 2, 3].map(i => (
-                    <div key={i} className="h-16 bg-muted rounded-lg animate-pulse"></div>
-                  ))
-                ) : (
-                  <div className="text-center py-6">
-                    <p className="text-muted-foreground">Aucune activité récente</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              </TabsContent>
+            </Tabs>
+          )}
         </div>
       </DashboardLayout>
     </ProtectedRoute>

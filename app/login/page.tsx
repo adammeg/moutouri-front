@@ -31,7 +31,7 @@ export default function LoginPage() {
       
       if (response.success) {
         // The loginUser function should already store tokens and user data
-        
+        console.log(response)
         toast({
           title: "Connexion réussie",
           description: `Bienvenue ${response.user.firstName}!`,
@@ -39,9 +39,9 @@ export default function LoginPage() {
         
         // Store user info manually to ensure it's available
         
-        /*localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage.setItem('user', JSON.stringify(response.user));
         localStorage.setItem('accessToken', response.accessToken);
-        localStorage.setItem('refreshToken', response.refreshToken);*/
+        localStorage.setItem('refreshToken', response.refreshToken);
         
         // Add a small delay to ensure state is updated before navigation
         setTimeout(() => {

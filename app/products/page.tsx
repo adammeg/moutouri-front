@@ -16,6 +16,8 @@ import { getProducts } from "@/services/products"
 import { getCategories } from "@/services/categories"
 import { SearchBar } from "@/components/search-bar"
 import GoogleAdSense from "@/components/google-adsense"
+import { ProductSearch } from "@/components/product-search";
+
 // Components that use search params need to be separated
 function ProductsContent() {
   const [products, setProducts] = useState<any[]>([])
@@ -37,49 +39,49 @@ function ProductsContent() {
   // Fetch categories and products
   useEffect(() => {
     if (!isMounted) return;
-    
+
     const fetchCategoriesAndProducts = async () => {
       try {
         setIsLoading(true)
         setError(null)
-        
+
         // Fetch categories first
         const categoriesResponse = await getCategories()
         if (categoriesResponse.success) {
           setCategories(categoriesResponse.categories || [])
         }
-        
+
         // Parse search parameters
         const query = searchParams?.get('q') || ""
         const categoryParam = searchParams?.get('category') || ""
         const minPrice = searchParams?.get('minPrice') || ""
         const maxPrice = searchParams?.get('maxPrice') || ""
         setSearchQuery(query)
-        
+
         // Set active tab based on category param if present
         if (categoryParam) {
           setActiveTab(categoryParam)
         }
-        
+
         // Build filter object from URL parameters
         const filters: any = {}
-        
+
         if (query) {
           filters.search = query
         }
-        
+
         if (categoryParam) {
           filters.category = categoryParam
         }
-        
+
         if (minPrice) {
           filters.minPrice = minPrice
         }
-        
+
         if (maxPrice) {
           filters.maxPrice = maxPrice
         }
-        
+
         // Fetch products with filters
         const response = await getProducts(filters)
         setProducts(response.products || [])
@@ -103,19 +105,19 @@ function ProductsContent() {
     setIsLoading(true);
     // Create new URL with search params
     const params = new URLSearchParams(searchParams?.toString());
-    
+
     if (query) {
       params.set('q', query);
     } else {
       params.delete('q');
     }
-    
+
     // Update category if present
     const category = searchParams?.get('category');
     if (category) {
       params.set('category', category);
     }
-    
+
     // Navigate to new URL
     router.push(`/products?${params.toString()}`);
   };
@@ -123,20 +125,20 @@ function ProductsContent() {
   const handleTabChange = async (value: string) => {
     setActiveTab(value)
     setIsLoading(true)
-    
+
     try {
       const filters: any = {}
-      
+
       // If not "all", add category filter
       if (value !== "all") {
         filters.category = value
       }
-      
+
       // Keep search query if exists
       if (searchQuery) {
         filters.search = searchQuery
       }
-      
+
       const response = await getProducts(filters)
       setProducts(response.products || [])
     } catch (error) {
@@ -153,9 +155,9 @@ function ProductsContent() {
 
   // Get products for a specific category
   const getProductsByCategory = (categoryId: string) => {
-    return products.filter((product: any) => 
-      typeof product.category === 'object' 
-        ? product.category._id === categoryId 
+    return products.filter((product: any) =>
+      typeof product.category === 'object'
+        ? product.category._id === categoryId
         : product.category === categoryId
     )
   }
@@ -174,14 +176,16 @@ function ProductsContent() {
             <Link href="/products/new">Publier une Annonce</Link>
           </Button>
         </div>
-        
+
         {/* Search bar */}
-        <div className="w-full sm:max-w-sm lg:max-w-lg xl:max-w-xl">
-          <SearchBar 
-            placeholder="Rechercher des motos, pièces..." 
-            onSearch={handleSearch}
-          />
-        </div>
+        <ProductSearch
+          onSearch={(query, filters) => {
+            // You can handle the search here if needed
+            console.log("Search query:", query);
+            console.log("Applied filters:", filters);
+          }}
+          className="mb-8"
+        />
       </div>
 
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
@@ -216,7 +220,7 @@ function ProductsContent() {
                 <>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {products.map((product: any) => (
-                      <ProductCard 
+                      <ProductCard
                         key={product._id}
                         product={product}
                       >
@@ -239,15 +243,15 @@ function ProductsContent() {
                     ))}
                   </div>
                   <div className="my-6 w-full">
-                    <GoogleAdSense 
+                    <GoogleAdSense
                       slot="2488891530"
                       className="adsense-container"
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {products.slice(4).map((product: any) => (
-                      <ProductCard 
+                      <ProductCard
                         key={product._id}
                         product={product}
                       />
@@ -274,7 +278,7 @@ function ProductsContent() {
                 {getProductsByCategory(category._id).length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {getProductsByCategory(category._id).map((product: any) => (
-                      <ProductCard 
+                      <ProductCard
                         key={product._id}
                         product={product}
                       />
