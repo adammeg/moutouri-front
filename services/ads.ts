@@ -15,6 +15,25 @@ export const getAdsByPosition = async (position: string) => {
     };
   }
 };
+
+// Track ad view (impression)
+export const trackAdView = async (adId: string) => {
+  try {
+    await axios.post(`${API_URL}/ads/track/impression/${adId}`);
+  } catch (error) {
+    console.error('Error tracking ad impression:', error);
+  }
+};
+
+// Track ad click
+export const trackAdClick = async (adId: string) => {
+  try {
+    await axios.post(`${API_URL}/ads/track/click/${adId}`);
+  } catch (error) {
+    console.error('Error tracking ad click:', error);
+  }
+};
+
 // Get ad statistics
 export const getAdStats = async (token: string) => {
   try {
@@ -58,14 +77,7 @@ export const createAd = async (adData: FormData, token: string) => {
     };
   }
 };
-// Track ad click
-export const trackAdClick = async (adId: string) => {
-  try {
-    await axios.post(`${API_URL}/ads/track/click/${adId}`);
-  } catch (error) {
-    console.error('Error tracking ad click:', error);
-  }
-};
+
 export const updateAd = async (id: string, adData: FormData, token: string) => {
   try {
     const response = await axios.put(`${API_URL}/ads/${id}`, adData, {
