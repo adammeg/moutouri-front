@@ -113,6 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
+  const [token, setToken] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   // Initialize authentication state from localStorage
   useEffect(() => {
@@ -153,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Set auth state
           setUser(normalizedUser)
           setIsAdmin(normalizedUser.role === 'admin')
+          setToken(token)
           
           // Set axios auth header if token exists
           if (token) {
@@ -176,13 +179,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Login handler
   const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    setError('');
+    
     try {
-      setIsLoading(true)
-      const response = await axios.post(`${API_URL}/users/login`, { email, password })
+      const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       
-      console.log('Login response:', response.data)
-      
-      if (response.data.success) {
+      if (response.data.success && response.data.token) {
+        // Save token to both state and localStorage
+        setToken(response.data.token);
+        localStorage.setItem('token', response.data.token);
+        console.log('🔑 Token saved to localStorage');
+        
         const userData = response.data.user
         const token = response.data.token || response.data.accessToken
         
@@ -301,20 +309,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Get auth token helper
   const getAuthToken = (): string | null => {
-    try {
-      const storedUser = localStorage.getItem('user')
-      const accessToken = localStorage.getItem('accessToken')
+    if (typeof window !== 'undefined') {
+      // First try to get from state
+      if (token) return token;
       
-      if (storedUser) {
-        const userData = JSON.parse(storedUser)
-        return userData.token || accessToken || null
+      // Then try to get from localStorage
+      const storedToken = localStorage.getItem('token');
+      console.log('🔑 Retrieved token from localStorage:', storedToken ? 'Found' : 'Not found');
+      
+      // If found in localStorage but not in state, update state
+      if (storedToken && !token) {
+        // Update state with token for future use
+        setToken(storedToken);
       }
       
-      return accessToken || null
-    } catch (error) {
-      console.error('Error retrieving auth token:', error)
-      return null
+      return storedToken;
     }
+    return null;
   }
 
   return (

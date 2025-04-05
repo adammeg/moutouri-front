@@ -16,60 +16,36 @@ export interface AdminStats {
 // Get admin dashboard statistics
 export const getAdminStats = async () => {
   try {
-    console.log("📡 getAdminStats: Starting API request");
-    
-    // Get user token from localStorage
-    const userString = localStorage.getItem('user');
-    console.log("🧾 User data in localStorage:", userString ? "Found" : "Not found");
-    
-    const user = userString ? JSON.parse(userString) : null;
-    const token = user?.accessToken || user?.token;
-    
-    console.log("🔑 Token from localStorage:", token ? `${token.substring(0, 10)}...` : "Not found");
+    const token = localStorage.getItem('token');
     
     if (!token) {
-      console.error('❌ No authentication token found');
-      return { 
-        success: false, 
-        message: 'No authentication token' 
+      console.error('No token found in localStorage');
+      return {
+        success: false,
+        message: 'Authentication token not found'
       };
     }
     
-    console.log('📤 Fetching admin stats with token:', token.substring(0, 15) + '...');
-    console.log('🔗 Request URL:', `${API_URL}/admin/stats`);
-    
+    console.log('Making admin stats request with token');
     const response = await axios.get(`${API_URL}/admin/stats`, {
       headers: {
-        Authorization: `Bearer ${token}`
+        'Authorization': `Bearer ${token}`
       }
     });
     
-    // Log the response for debugging
-    console.log('📥 Admin stats response status:', response.status);
-    console.log('📊 Admin stats response data:', response.data);
-    
     return {
       success: true,
-      data: response.data,
-      message: 'Admin stats retrieved successfully'
+      data: response.data
     };
   } catch (error) {
-    console.error('❌ Error fetching admin stats:', error);
-    
-    // Extract more detailed error information
-    const errorMessage = axios.isAxiosError(error) && error.response?.data?.message
+    console.error('Error fetching admin stats:', error);
+    const errorMsg = axios.isAxiosError(error) && error.response?.data?.message
       ? error.response.data.message
-      : 'Could not retrieve admin statistics';
-    
-    const statusCode = axios.isAxiosError(error) && error.response?.status
-      ? error.response.status
-      : 'unknown';
+      : 'Failed to fetch admin statistics';
       
-    console.error(`❗ API error (${statusCode}):`, errorMessage);
-    
     return {
       success: false,
-      message: errorMessage
+      message: errorMsg
     };
   }
 };
