@@ -31,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
+      <link rel="icon" href="/logo.png" />
       <meta name="google-site-verification" content="ZF2aqD1mmPfeqT3XitJg05krx-rii2plB9f9_I63GkQ" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="google-adsense-account" content="ca-pub-9017132503634604"></meta>
