@@ -31,12 +31,14 @@ export function Advertisement({
   const [ad, setAd] = useState<Ad | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [imgError, setImgError] = useState(false)
 
   useEffect(() => {
     const fetchAd = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`/api/ads/position/${position}`)
+        setImgError(false)
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ads/position/${position}`)
         
         if (!response.ok) {
           throw new Error('Failed to fetch advertisement')
@@ -51,7 +53,10 @@ export function Advertisement({
           
           // Track impression
           if (data.ads[randomIndex]._id) {
-            trackAdView(data.ads[randomIndex]._id)
+            trackAdView(data.ads[randomIndex]._id).catch(err => {
+              // Silent fail for tracking - doesn't affect user experience
+              console.warn('Failed to track ad view:', err)
+            })
           }
         } else {
           setAd(null)
@@ -70,7 +75,9 @@ export function Advertisement({
   // Handle click on ad
   const handleAdClick = () => {
     if (ad?._id) {
-      trackAdClick(ad._id)
+      trackAdClick(ad._id).catch(err => {
+        console.warn('Failed to track ad click:', err)
+      })
     }
   }
 
@@ -82,7 +89,7 @@ export function Advertisement({
     )
   }
 
-  if (error || !ad) {
+  if (error || !ad || imgError) {
     if (!fallbackText) return null
     
     return (
@@ -93,16 +100,28 @@ export function Advertisement({
     )
   }
 
+  // Function to optimize Cloudinary URL if needed
+  const getOptimizedImageUrl = (url: string) => {
+    if (url.includes('cloudinary.com')) {
+      // Add quality and format optimizations to Cloudinary URL
+      // This is a simple example - can be made more sophisticated
+      return url.replace('/upload/', '/upload/q_auto,f_auto/');
+    }
+    return url;
+  }
+
   const AdContent = () => (
     <div className={`relative rounded-lg overflow-hidden ${className}`}
          style={{ maxHeight }}>
       <div className="relative aspect-[3/1] w-full">
         <Image 
-          src={ad.image} 
+          src={getOptimizedImageUrl(ad.image)} 
           alt={ad.title}
           fill
           priority
           className="object-cover"
+          onError={() => setImgError(true)}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
         
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex flex-col justify-end p-4">
@@ -132,4 +151,4 @@ export function Advertisement({
   ) : (
     <AdContent />
   )
-} 
+}
