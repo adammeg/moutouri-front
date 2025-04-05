@@ -16,7 +16,7 @@ export interface AdminStats {
 // Get admin dashboard statistics
 export const getAdminStats = async () => {
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('accessToken');
     
     if (!token) {
       console.error('No token found in localStorage');
