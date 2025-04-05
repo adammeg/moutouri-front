@@ -1,4 +1,4 @@
- "use client"
+"use client"
 
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -58,6 +58,31 @@ export default function CreateAdPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
+      
+      console.log("Selected file:", {
+        name: file.name,
+        type: file.type,
+        size: `${(file.size / 1024).toFixed(2)} KB`
+      })
+      
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Format non supporté",
+          description: "Veuillez sélectionner une image (JPG, PNG, etc.)",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Fichier trop volumineux",
+          description: "La taille de l'image ne doit pas dépasser 5MB",
+          variant: "destructive",
+        })
+        return
+      }
+      
       setAdImage(file)
       setImagePreview(URL.createObjectURL(file))
     }
@@ -108,7 +133,24 @@ export default function CreateAdPage() {
         formData.append("image", adImage)
       }
 
+      console.log("Submitting ad with token:", token?.substring(0, 15) + "...")
+      
+      console.log("FormData contents:", {
+        title: adTitle,
+        description: adDescription.substring(0, 30) + "...",
+        position: adPosition,
+        isActive: adIsActive,
+        startDate: adStartDate.toISOString(),
+        endDate: adEndDate?.toISOString(),
+        hasLink: !!adLink,
+        hasImage: !!adImage,
+        imageType: adImage?.type,
+        imageSize: adImage ? `${(adImage.size / 1024).toFixed(2)} KB` : "N/A"
+      })
+      
       const response = await createAd(formData, token)
+      
+      console.log("API Response:", response)
       
       if (response.success) {
         toast({
@@ -121,10 +163,20 @@ export default function CreateAdPage() {
       }
     } catch (error) {
       console.error("Error creating ad:", error)
+      
+      let errorMessage = "Une erreur est survenue lors de la création de l'annonce"
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+      } else if (typeof error === 'object' && error !== null) {
+        errorMessage = JSON.stringify(error)
+      }
+      
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la création de l'annonce",
         variant: "destructive",
+        description: errorMessage,
+        duration: 5000,
       })
     } finally {
       setIsSubmitting(false)

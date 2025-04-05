@@ -1,5 +1,4 @@
-"use client"
-
+// This is an example implementation - you might need to adjust this based on your existing component
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"

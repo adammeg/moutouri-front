@@ -61,22 +61,47 @@ export const getAdStats = async (token: string) => {
 // Admin functions - Create, update, delete ads
 export const createAd = async (adData: FormData, token: string) => {
   try {
+    // Debug the token being used
+    console.log('Creating ad with token length:', token?.length || 0)
+    
+    // Log headers and form data content summary for debugging
+    const formDataSummary: Record<string, any> = {}
+    for (const [key, value] of adData.entries()) {
+      formDataSummary[key] = value instanceof File 
+        ? `File: ${value.name} (${value.type}, ${(value.size/1024).toFixed(2)}KB)` 
+        : value
+    }
+    console.log('FormData summary:', formDataSummary)
+    
     const response = await axios.post(`${API_URL}/ads`, adData, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'multipart/form-data'
       }
-    });
+    })
     
-    return response.data;
+    console.log('Ad creation response:', response.status, response.statusText)
+    return response.data
   } catch (error) {
-    console.error('Error creating ad:', error);
+    console.error('Error creating ad:', error)
+    
+    // More detailed error information
+    let errorMessage = 'Could not create ad'
+    if (axios.isAxiosError(error)) {
+      console.error('API error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        headers: error.response?.headers
+      })
+      errorMessage = error.response?.data?.message || 'API error: ' + (error.response?.status || 'unknown')
+    }
+    
     return {
       success: false,
-      message: 'Could not create ad'
-    };
+      message: errorMessage
+    }
   }
-};
+}
 
 export const updateAd = async (id: string, adData: FormData, token: string) => {
   try {
