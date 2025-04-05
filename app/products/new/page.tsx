@@ -167,7 +167,7 @@ export default function NewProductPage() {
       }, images);
       
       if (result.success) {
-        toast({
+      toast({
           title: "Produit créé",
           description: "Votre annonce a été publiée avec succès",
         });
@@ -194,21 +194,21 @@ export default function NewProductPage() {
 
   return (
     <ProtectedRoute>
-      <DashboardLayout>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Publier une Nouvelle Annonce</h1>
-            <p className="text-muted-foreground">Créez une annonce détaillée pour attirer des acheteurs potentiels</p>
-          </div>
-          <Separator />
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Publier une Nouvelle Annonce</h1>
+          <p className="text-muted-foreground">Créez une annonce détaillée pour attirer des acheteurs potentiels</p>
+        </div>
+        <Separator />
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Catégorie du Produit</CardTitle>
-                <CardDescription>Sélectionnez la catégorie qui décrit le mieux votre produit</CardDescription>
-              </CardHeader>
-              <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Catégorie du Produit</CardTitle>
+              <CardDescription>Sélectionnez la catégorie qui décrit le mieux votre produit</CardDescription>
+            </CardHeader>
+            <CardContent>
                 <Select 
                   value={formData.category}
                   onValueChange={(value) => handleSelectChange('category', value)}
@@ -224,17 +224,17 @@ export default function NewProductPage() {
                     ))}
                   </SelectContent>
                 </Select>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Détails du Produit</CardTitle>
-                <CardDescription>Fournissez des informations détaillées sur votre produit</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Titre</Label>
+          <Card>
+            <CardHeader>
+              <CardTitle>Détails du Produit</CardTitle>
+              <CardDescription>Fournissez des informations détaillées sur votre produit</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="title">Titre</Label>
                   <Input 
                     id="title" 
                     placeholder="ex: Ducati Panigale V4 2023" 
@@ -242,14 +242,14 @@ export default function NewProductPage() {
                     onChange={handleChange}
                     required 
                   />
-                  <p className="text-sm text-muted-foreground">
-                    Soyez précis et incluez des détails clés comme la marque, le modèle et l'année
-                  </p>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  Soyez précis et incluez des détails clés comme la marque, le modèle et l'année
+                </p>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Prix (DT)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="price">Prix (DT)</Label>
                     <Input 
                       id="price" 
                       type="number" 
@@ -260,31 +260,31 @@ export default function NewProductPage() {
                       onChange={handleChange}
                       required 
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="condition">État</Label>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="condition">État</Label>
                     <Select 
                       value={formData.condition}
                       onValueChange={(value) => handleSelectChange('condition', value)}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Sélectionner l'état" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="new">Neuf</SelectItem>
+                      <SelectValue placeholder="Sélectionner l'état" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">Neuf</SelectItem>
                         <SelectItem value="like-new">Comme neuf</SelectItem>
-                        <SelectItem value="excellent">Excellent</SelectItem>
-                        <SelectItem value="good">Bon</SelectItem>
-                        <SelectItem value="fair">Correct</SelectItem>
+                      <SelectItem value="excellent">Excellent</SelectItem>
+                      <SelectItem value="good">Bon</SelectItem>
+                      <SelectItem value="fair">Correct</SelectItem>
                         <SelectItem value="salvage">Pour pièces</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="year">Année</Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="year">Année</Label>
                     <Input 
                       id="year" 
                       type="number" 
@@ -305,8 +305,8 @@ export default function NewProductPage() {
                       value={formData.mileage}
                       onChange={handleChange}
                     />
-                  </div>
-                  <div className="space-y-2">
+                </div>
+                <div className="space-y-2">
                     <Label htmlFor="engineSize">Cylindrée (cc)</Label>
                     <Input 
                       id="engineSize" 
@@ -318,7 +318,7 @@ export default function NewProductPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
+                <div className="space-y-2">
                     <Label htmlFor="color">Couleur</Label>
                     <Input 
                       id="color" 
@@ -327,53 +327,53 @@ export default function NewProductPage() {
                       onChange={handleChange}
                     />
                   </div>
-                </div>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Décrivez votre produit en détail..."
-                    className="min-h-[200px]"
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Décrivez votre produit en détail..."
+                  className="min-h-[200px]"
                     value={formData.description}
                     onChange={handleChange}
-                    required
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Incluez l'état, les caractéristiques, l'historique et la raison de la vente
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                  required
+                />
+                <p className="text-sm text-muted-foreground">
+                  Incluez l'état, les caractéristiques, l'historique et la raison de la vente
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Images du Produit</CardTitle>
-                <CardDescription>Ajoutez des images de haute qualité de votre produit (jusqu'à 10)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Images du Produit</CardTitle>
+              <CardDescription>Ajoutez des images de haute qualité de votre produit (jusqu'à 10)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {imagesPreviews.map((image, index) => (
-                    <div key={index} className="relative aspect-square rounded-md border overflow-hidden group">
-                      <img
+                  <div key={index} className="relative aspect-square rounded-md border overflow-hidden group">
+                    <img
                         src={image}
-                        alt={`Image du produit ${index + 1}`}
-                        className="h-full w-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(index)}
-                        className="absolute top-1 right-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-4 w-4" />
-                        <span className="sr-only">Supprimer l'image</span>
-                      </button>
-                    </div>
-                  ))}
-                  {images.length < 10 && (
+                      alt={`Image du produit ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className="absolute top-1 right-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Supprimer l'image</span>
+                    </button>
+                  </div>
+                ))}
+                {images.length < 10 && (
                     <label className="aspect-square rounded-md border border-dashed flex flex-col items-center justify-center gap-1 hover:bg-muted transition-colors cursor-pointer">
-                      <Plus className="h-6 w-6 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Ajouter une Image</span>
+                    <Plus className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Ajouter une Image</span>
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -382,19 +382,19 @@ export default function NewProductPage() {
                         className="sr-only"
                       />
                     </label>
-                  )}
-                </div>
-                {images.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                    <h3 className="font-medium">Aucune image ajoutée</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Ajoutez des images de haute qualité pour attirer plus d'acheteurs
-                    </p>
+                )}
+              </div>
+              {images.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                  <h3 className="font-medium">Aucune image ajoutée</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Ajoutez des images de haute qualité pour attirer plus d'acheteurs
+                  </p>
                     <label>
                       <Button type="button" variant="outline">
-                        Ajouter des Images
-                      </Button>
+                    Ajouter des Images
+                  </Button>
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -403,24 +403,24 @@ export default function NewProductPage() {
                         className="sr-only"
                       />
                     </label>
-                  </div>
-                )}
-                <p className="text-sm text-muted-foreground mt-4">
-                  La première image sera utilisée comme image principale de votre annonce
-                </p>
-              </CardContent>
-            </Card>
+                </div>
+              )}
+              <p className="text-sm text-muted-foreground mt-4">
+                La première image sera utilisée comme image principale de votre annonce
+              </p>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Localisation</CardTitle>
-                <CardDescription>
-                  Indiquez votre localisation pour aider les acheteurs à trouver votre annonce
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Localisation</Label>
+          <Card>
+            <CardHeader>
+              <CardTitle>Localisation</CardTitle>
+              <CardDescription>
+                Indiquez votre localisation pour aider les acheteurs à trouver votre annonce
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="location">Localisation</Label>
                   <Input 
                     id="location" 
                     placeholder="ex: Tunis, TN" 
@@ -428,21 +428,21 @@ export default function NewProductPage() {
                     onChange={handleChange}
                     required 
                   />
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            <CardFooter className="flex justify-end gap-4 px-0">
-              <Button type="button" variant="outline" onClick={() => router.back()}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Publication en cours..." : "Publier l'Annonce"}
-              </Button>
-            </CardFooter>
-          </form>
-        </div>
-      </DashboardLayout>
+          <CardFooter className="flex justify-end gap-4 px-0">
+            <Button type="button" variant="outline" onClick={() => router.back()}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Publication en cours..." : "Publier l'Annonce"}
+            </Button>
+          </CardFooter>
+        </form>
+      </div>
+    </DashboardLayout>
     </ProtectedRoute>
   )
 }

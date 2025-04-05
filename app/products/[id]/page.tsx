@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dialog"
 import SEO from "@/components/seo"
 import { ProductJsonLd } from "@/components/product-json-ld"
+import { Advertisement } from '@/components/advertisement'
 
 export default function ProductDetailsPage() {
   const params = useParams()
@@ -119,13 +120,13 @@ export default function ProductDetailsPage() {
   // Functions to navigate images
   const nextImage = () => {
     if (product.images && product.images.length > 0) {
-      setCurrentImageIndex((prev) => (prev + 1) % product.images.length)
+    setCurrentImageIndex((prev) => (prev + 1) % product.images.length)
     }
   }
 
   const prevImage = () => {
     if (product.images && product.images.length > 0) {
-      setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length)
+    setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length)
     }
   }
 
@@ -159,10 +160,10 @@ export default function ProductDetailsPage() {
   const handleCopyEmail = () => {
     if (product.publisher?.email) {
       navigator.clipboard.writeText(product.publisher.email)
-      toast({
+    toast({
         title: "Email copié",
         description: "L'adresse email a été copiée dans le presse-papiers.",
-      })
+    })
     }
   }
 
@@ -310,7 +311,7 @@ export default function ProductDetailsPage() {
                   {product.images && product.images.length > 0 ? (
                     <img
                       src={product.images[currentImageIndex]}
-                      alt={`${product.title} - Image ${currentImageIndex + 1}`}
+                    alt={`${product.title} - Image ${currentImageIndex + 1}`}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -321,35 +322,35 @@ export default function ProductDetailsPage() {
                   
                   {product.images && product.images.length > 1 && (
                     <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 text-foreground hover:bg-background"
-                        onClick={prevImage}
-                      >
-                        <ChevronLeft className="h-6 w-6" />
-                        <span className="sr-only">Image précédente</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 text-foreground hover:bg-background"
-                        onClick={nextImage}
-                      >
-                        <ChevronRight className="h-6 w-6" />
-                        <span className="sr-only">Image suivante</span>
-                      </Button>
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-2 py-1 rounded-full bg-background/80">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 text-foreground hover:bg-background"
+                    onClick={prevImage}
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                    <span className="sr-only">Image précédente</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 text-foreground hover:bg-background"
+                    onClick={nextImage}
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                    <span className="sr-only">Image suivante</span>
+                  </Button>
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-2 py-1 rounded-full bg-background/80">
                         {product.images.map((image: string, index: number) => (
-                          <button
-                            key={index}
-                            className={`h-2 w-2 rounded-full ${index === currentImageIndex ? "bg-primary" : "bg-muted"}`}
-                            onClick={() => setCurrentImageIndex(index)}
-                          >
-                            <span className="sr-only">Voir image {index + 1}</span>
-                          </button>
-                        ))}
-                      </div>
+                      <button
+                        key={index}
+                        className={`h-2 w-2 rounded-full ${index === currentImageIndex ? "bg-primary" : "bg-muted"}`}
+                        onClick={() => setCurrentImageIndex(index)}
+                      >
+                        <span className="sr-only">Voir image {index + 1}</span>
+                      </button>
+                    ))}
+                  </div>
                     </>
                   )}
                 </div>
@@ -416,23 +417,28 @@ export default function ProductDetailsPage() {
                   </CardHeader>
                   <CardContent>
                     {product.publisher ? (
-                      <div className="flex items-center gap-4 mb-4">
-                        <Avatar className="h-16 w-16">
+                    <div className="flex items-center gap-4 mb-4">
+                      <Avatar className="h-16 w-16">
                           <AvatarImage src={product.publisher.image} alt={product.publisher.firstName} />
                           <AvatarFallback>{product.publisher.firstName?.[0] || "U"}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-2">
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-2">
                             <h3 className="text-lg font-semibold">
                               {product.publisher.firstName} {product.publisher.lastName}
                             </h3>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                            <User className="h-3 w-3" />
-                            <span>Membre depuis {formatDate(product.publisher.createdAt)}</span>
-                          </div>
                         </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                          <User className="h-3 w-3" />
+                            <span>Membre depuis {formatDate(product.publisher.createdAt)}</span>
+                        </div>
+                        </div>
+                        <Advertisement 
+            position="sidebar" 
+            maxHeight={400}
+          />
                       </div>
+                      
                     ) : (
                       <p>Information sur le vendeur non disponible</p>
                     )}
@@ -597,23 +603,9 @@ export default function ProductDetailsPage() {
                 Facebook
               </Button>
               
-              <Button 
-                variant="outline" 
-                className="flex justify-start items-center gap-2"
-                onClick={() => handleSocialShare('twitter')}
-              >
-                <Twitter className="h-4 w-4 text-blue-400" />
-                Twitter
-              </Button>
+
               
-              <Button 
-                variant="outline" 
-                className="flex justify-start items-center gap-2"
-                onClick={() => handleSocialShare('linkedin')}
-              >
-                <Linkedin className="h-4 w-4 text-blue-700" />
-                LinkedIn
-              </Button>
+
               
               <Button 
                 variant="outline" 

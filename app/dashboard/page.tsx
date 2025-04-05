@@ -27,6 +27,7 @@ import { getUserProducts } from "@/services/products"
 import { getLatestProducts, deleteProduct } from "@/services/products"
 import ProtectedRoute from "@/components/protected-route"
 import { ProductCard } from "@/components/product-card"
+import { Advertisement } from '@/components/advertisement'
 
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useAuth()
@@ -123,6 +124,21 @@ export default function DashboardPage() {
     <ProtectedRoute>
       <DashboardLayout>
         <div className="space-y-6">
+          {/* Dashboard welcome section */}
+          <div>
+            <h1 className="text-3xl font-bold">Bienvenue sur votre tableau de bord</h1>
+            <p className="text-muted-foreground">
+              Gérez vos annonces et votre profil
+            </p>
+          </div>
+          
+          {/* Personalized advertisement */}
+          <Advertisement 
+            position="sidebar" 
+            fallbackText="Découvrez nos offres premium"
+          />
+          
+          {/* Rest of dashboard content */}
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold tracking-tight">Tableau de bord</h1>
             <Button asChild>

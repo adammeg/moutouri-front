@@ -16,7 +16,8 @@ import { getProducts } from "@/services/products"
 import { getCategories } from "@/services/categories"
 import { SearchBar } from "@/components/search-bar"
 import GoogleAdSense from "@/components/google-adsense"
-import { ProductSearch } from "@/components/product-search";
+import { ProductSearch } from "@/components/product-search"
+import { Advertisement } from '@/components/advertisement'
 
 // Components that use search params need to be separated
 function ProductsContent() {
@@ -188,6 +189,12 @@ function ProductsContent() {
         />
       </div>
 
+      {/* Top advertisement */}
+      <Advertisement 
+        position="home-hero" 
+        className="mb-8"
+      />
+
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
         <TabsList className="w-full border-b pb-px overflow-x-auto flex-nowrap">
           <TabsTrigger value="all">Tous les Produits</TabsTrigger>
@@ -218,39 +225,21 @@ function ProductsContent() {
             <TabsContent value="all" className="mt-6">
               {products.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {products.map((product: any) => (
+                  {/* First batch of products */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+                    {products.slice(0, 8).map((product: any) => (
                       <ProductCard
                         key={product._id}
                         product={product}
-                      >
-                        {product.images && product.images.length > 0 ? (
-                          <Image
-                            src={product.images[0]}
-                            alt={product.title}
-                            width={0}
-                            height={0}
-                            sizes="100vw"
-                            className="h-48 w-full object-cover rounded-t"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="h-48 w-full bg-gray-200 flex items-center justify-center rounded-t">
-                            <span className="text-gray-500">Pas d'image</span>
-                          </div>
-                        )}
-                      </ProductCard>
+                      />
                     ))}
                   </div>
-                  <div className="my-6 w-full">
-                    <GoogleAdSense
-                      slot="2488891530"
-                      className="adsense-container"
-                    />
-                  </div>
+                  
+                  {/* Middle advertisement */}
+                  <Advertisement position="home-middle" className="my-8" />
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {products.slice(4).map((product: any) => (
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {products.slice(8).map((product: any) => (
                       <ProductCard
                         key={product._id}
                         product={product}
@@ -276,7 +265,7 @@ function ProductsContent() {
             {categories.map((category) => (
               <TabsContent key={category._id} value={category._id} className="mt-6">
                 {getProductsByCategory(category._id).length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {getProductsByCategory(category._id).map((product: any) => (
                       <ProductCard
                         key={product._id}
@@ -301,6 +290,9 @@ function ProductsContent() {
           </>
         )}
       </Tabs>
+      
+      {/* Bottom advertisement */}
+      <Advertisement position="home-bottom" className="mt-12" />
     </div>
   );
 }

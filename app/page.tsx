@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import GoogleAdSense from '@/components/google-adsense';
 import HeroBackground from "@/components/hero-background";
 import PromotionalAds from '@/components/promotional-ads';
+import { Advertisement } from '@/components/advertisement'
 
 // Animation variants
 const fadeIn = {
@@ -96,6 +97,13 @@ export default function Home() {
             </motion.div>
           </div>
         </section>
+
+        {/* Top advertisement banner */}
+        <Advertisement 
+          position="home-hero" 
+          className="container mx-auto my-8"
+          fallbackText="Espace publicitaire disponible" 
+        />
 
         {/* Categories section with images */}
         <section className="py-16 container mx-auto px-4">
@@ -204,6 +212,12 @@ export default function Home() {
             </motion.div>
           </motion.div>
         </section>
+
+        {/* Middle section advertisement */}
+        <Advertisement 
+          position="home-middle" 
+          className="my-10"
+        />
 
         {/* Features section with animations */}
         <section className="py-16 bg-muted relative overflow-hidden">
@@ -360,6 +374,12 @@ export default function Home() {
         <GoogleAdSense
           slot="2488891530"
           className="adsense-container my-8"
+        />
+
+        {/* Bottom advertisement before footer */}
+        <Advertisement 
+          position="home-bottom" 
+          className="container mx-auto my-12"
         />
       </main>
 

@@ -1,19 +1,40 @@
 // Create a service for the ads API
 import { API_URL } from '@/config/config';
 import axios from 'axios';
+
 // Get ads by position
 export const getAdsByPosition = async (position: string) => {
   try {
     const response = await axios.get(`${API_URL}/ads/position/${position}`);
-    const data = response.data;
-    
-    return data;
+    return response.data;
   } catch (error) {
     console.error('Error fetching ads:', error);
     return {
       success: false,
-      message: 'Could not fetch ads',
       ads: []
+    };
+  }
+};
+// Get ad statistics
+export const getAdStats = async (token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/ads/stats`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching ad stats:', error);
+    return {
+      success: false,
+      stats: {
+        totalAds: 0,
+        activeAds: 0,
+        totalImpressions: 0,
+        totalClicks: 0
+      }
     };
   }
 };
@@ -37,7 +58,14 @@ export const createAd = async (adData: FormData, token: string) => {
     };
   }
 };
-
+// Track ad click
+export const trackAdClick = async (adId: string) => {
+  try {
+    await axios.post(`${API_URL}/ads/track/click/${adId}`);
+  } catch (error) {
+    console.error('Error tracking ad click:', error);
+  }
+};
 export const updateAd = async (id: string, adData: FormData, token: string) => {
   try {
     const response = await axios.put(`${API_URL}/ads/${id}`, adData, {
@@ -78,41 +106,23 @@ export const deleteAd = async (id: string, token: string) => {
 
 export const getAllAds = async (token: string) => {
   try {
-    console.log("Making request to:", `${API_URL}/ads`);
-    console.log("With auth token:", token.substring(0, 15) + '...');
-    
     const response = await axios.get(`${API_URL}/ads`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${token}`
       }
     });
     
-    console.log("API response status:", response.status);
-    
-    // If we get here, the request was successful
     return {
       success: true,
-      ads: response.data.ads || [],
-      message: 'Ads retrieved successfully'
+      ads: response.data.ads
     };
   } catch (error) {
     console.error('Error fetching all ads:', error);
-    
-    // Extract more detailed error information
-    const errorMessage = axios.isAxiosError(error) && error.response?.data?.message
-      ? error.response.data.message
-      : 'Could not fetch ads';
-    
-    const statusCode = axios.isAxiosError(error) && error.response?.status
-      ? error.response.status
-      : 'unknown';
-      
-    console.error(`API error (${statusCode}):`, errorMessage);
-    
     return {
       success: false,
-      message: errorMessage,
+      message: axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : 'Failed to fetch ads',
       ads: []
     };
   }
