@@ -136,8 +136,8 @@ export default function ProductDetailsPage() {
   }
 
   const handleCallSeller = () => {
-    if (product.publisher?.phone) {
-      window.location.href = `tel:${product.publisher.phone}`
+    if (product.user?.phone) {
+      window.location.href = `tel:${product.user.phone}`
     } else {
       toast({
         title: "Numéro non disponible",
@@ -148,8 +148,8 @@ export default function ProductDetailsPage() {
   }
 
   const handleCopyPhone = () => {
-    if (product.publisher?.phone) {
-      navigator.clipboard.writeText(product.publisher.phone)
+    if (product.user?.phone) {
+      navigator.clipboard.writeText(product.user.phone)
       toast({
         title: "Numéro copié",
         description: "Le numéro de téléphone a été copié dans le presse-papiers.",
@@ -158,8 +158,8 @@ export default function ProductDetailsPage() {
   }
 
   const handleCopyEmail = () => {
-    if (product.publisher?.email) {
-      navigator.clipboard.writeText(product.publisher.email)
+    if (product.user?.email) {
+      navigator.clipboard.writeText(product.user.email)
     toast({
         title: "Email copié",
         description: "L'adresse email a été copiée dans le presse-papiers.",
