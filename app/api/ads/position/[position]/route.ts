@@ -3,7 +3,7 @@ import { getAdsByPosition } from '@/services/ads';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { position: string } }
+  { params }: { params: { position: string }; }
 ) {
   try {
     const position = params.position;
