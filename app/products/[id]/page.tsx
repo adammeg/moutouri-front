@@ -85,18 +85,6 @@ export default function ProductDetailsPage() {
     fetchProductDetails()
   }, [params?.id, toast])
 
-  useEffect(() => {
-    if (product && product.user) {
-      console.log("Seller data:", {
-        hasPhone: !!product.user.phone,
-        phone: product.user.phone,
-        hasEmail: !!product.user.email,
-        email: product.user.email,
-        userData: product.user
-      });
-    }
-  }, [product]);
-
   // Show loading state
   if (loading) {
     return (
@@ -148,8 +136,8 @@ export default function ProductDetailsPage() {
   }
 
   const handleCallSeller = () => {
-    if (product.user?.phone) {
-      window.location.href = `tel:${product.user.phone}`
+    if (product.publisher?.phone) {
+      window.location.href = `tel:${product.publisher.phone}`
     } else {
       toast({
         title: "Numéro non disponible",
@@ -160,8 +148,8 @@ export default function ProductDetailsPage() {
   }
 
   const handleCopyPhone = () => {
-    if (product.user?.phone) {
-      navigator.clipboard.writeText(product.user.phone)
+    if (product.publisher?.phone) {
+      navigator.clipboard.writeText(product.publisher.phone)
       toast({
         title: "Numéro copié",
         description: "Le numéro de téléphone a été copié dans le presse-papiers.",
@@ -170,8 +158,8 @@ export default function ProductDetailsPage() {
   }
 
   const handleCopyEmail = () => {
-    if (product.user?.email) {
-      navigator.clipboard.writeText(product.user.email)
+    if (product.publisher?.email) {
+      navigator.clipboard.writeText(product.publisher.email)
     toast({
         title: "Email copié",
         description: "L'adresse email a été copiée dans le presse-papiers.",
@@ -461,62 +449,53 @@ export default function ProductDetailsPage() {
           </div>
 
           <div className="space-y-6">
-            <Card className="overflow-hidden">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Contacter le vendeur</CardTitle>
-                <CardDescription>
-                  Vous pouvez contacter par téléphone ou email.
-                </CardDescription>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-3xl font-bold">{product.price?.toLocaleString() || 0} DT</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {product.user?.phone ? (
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{product.user.phone}</p>
-                      <div className="flex space-x-2 mt-1">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-7 px-2 text-xs" 
-                          onClick={handleCallSeller}
-                        >
-                          Appeler
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-7 px-2 text-xs"
-                          onClick={handleCopyPhone}
-                        >
-                          Copier
-                        </Button>
-                      </div>
-                    </div>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">État</p>
+                    <p className="font-medium">{product.condition}</p>
                   </div>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-5 w-5 text-muted-foreground" />
-                    <p className="text-muted-foreground">Numéro de téléphone non disponible</p>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Année</p>
+                    <p className="font-medium">{product.year}</p>
                   </div>
-                )}
-                
-                {product.user?.email && (
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{product.user.email}</p>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-7 px-2 text-xs mt-1"
-                        onClick={handleCopyEmail}
-                      >
-                        Copier
-                      </Button>
-                    </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Kilométrage</p>
+                    <p className="font-medium">{product.kilometrage?.toLocaleString() || 0} km</p>
                   </div>
-                )}
+                  <div>
+                    <p className="text-sm text-muted-foreground">Cylindrée</p>
+                    <p className="font-medium">{product.cylinder} cc</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Couleur</p>
+                    <p className="font-medium">{product.color}</p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <Button className="w-full" onClick={handleContactSeller}>
+                    <Phone className="mr-2 h-4 w-4" />
+                    Contacter le Vendeur
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={handleSaveProduct}>
+                    <Heart className="mr-2 h-4 w-4" />
+                    Sauvegarder
+                  </Button>
+                </div>
+                <div className="rounded-lg bg-muted p-3 text-sm">
+                  <p className="font-medium mb-1">Conseils de Sécurité</p>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>• Rencontrez-vous dans un lieu public</li>
+                    <li>• Ne payez pas à l'avance</li>
+                    <li>• Inspectez l'article avant d'acheter</li>
+                    <li>• Vérifiez tous les documents</li>
+                  </ul>
+                </div>
               </CardContent>
             </Card>
           </div>
