@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdsByPosition } from '@/services/ads';
 
+interface RouteParams {
+  params: {
+    position: string;
+  };
+}
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { position: string }; }
+  { params }: RouteParams
 ) {
   try {
     const position = params.position;
+    console.log(`API route called for ad position: ${position}`);
+    
     const response = await getAdsByPosition(position);
     
     return NextResponse.json(response);
