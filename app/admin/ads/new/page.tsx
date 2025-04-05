@@ -257,8 +257,7 @@ export default function CreateAdPage() {
                         <Calendar
                           mode="single"
                           selected={adEndDate || undefined}
-                          onSelect={setAdEndDate}
-                          fromDate={adStartDate}
+                          onSelect={(date) => date && setAdEndDate(date)}
                           initialFocus
                         />
                       </PopoverContent>
