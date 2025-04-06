@@ -54,6 +54,7 @@ export default function ProductDetailsPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [contactDialogOpen, setContactDialogOpen] = useState(false)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [publisherData, setPublisherData] = useState(null)
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -99,6 +100,27 @@ export default function ProductDetailsPage() {
       hasUser: !!product?.user,
       userData: product?.user
     });
+  }, [product]);
+
+  useEffect(() => {
+    const fetchPublisherData = async () => {
+      if (product && typeof product.publisher === 'string') {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${product.publisher}`);
+          if (response.ok) {
+            const userData = await response.json();
+            console.log("Fetched publisher data:", userData);
+            setPublisherData(userData.user || userData);
+          } else {
+            console.error("Failed to fetch publisher data:", await response.text());
+          }
+        } catch (error) {
+          console.error("Error fetching publisher data:", error);
+        }
+      }
+    };
+
+    fetchPublisherData();
   }, [product]);
 
   // Show loading state
@@ -151,8 +173,24 @@ export default function ProductDetailsPage() {
     setContactDialogOpen(true)
   }
 
+  const getSeller = () => {
+    if (product?.publisher && typeof product.publisher === 'object') {
+      return product.publisher;
+    }
+    
+    if (publisherData) {
+      return publisherData;
+    }
+    
+    if (product?.user) {
+      return product.user;
+    }
+    
+    return {};
+  }
+
   const handleCallSeller = () => {
-    const seller = product.publisher || product.user;
+    const seller = getSeller();
     if (seller?.phone) {
       window.location.href = `tel:${seller.phone}`;
     } else {
@@ -165,7 +203,7 @@ export default function ProductDetailsPage() {
   };
 
   const handleCopyPhone = () => {
-    const seller = product.publisher || product.user;
+    const seller = getSeller();
     if (seller?.phone) {
       navigator.clipboard.writeText(seller.phone);
       toast({
@@ -176,7 +214,7 @@ export default function ProductDetailsPage() {
   };
 
   const handleCopyEmail = () => {
-    const seller = product.publisher || product.user;
+    const seller = getSeller();
     if (seller?.email) {
       navigator.clipboard.writeText(seller.email);
       toast({
@@ -436,7 +474,7 @@ export default function ProductDetailsPage() {
                   </CardHeader>
                   <CardContent>
                     {(() => {
-                      const seller = product.publisher || product.user;
+                      const seller = getSeller();
                       
                       return seller ? (
                         <div className="rounded-lg border p-4">
@@ -555,7 +593,7 @@ export default function ProductDetailsPage() {
                     </CardHeader>
                     <CardContent>
                       {(() => {
-                        const seller = product.publisher || product.user;
+                        const seller = getSeller();
                         
                         return (
                           <div className="space-y-4">
