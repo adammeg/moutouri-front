@@ -753,4 +753,3 @@ export default function ProductDetailsPage() {
     </DashboardLayout>
   )
 }
-
