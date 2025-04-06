@@ -8,7 +8,7 @@ export default function SchemaMarkup() {
             "@type": "Organization",
             "name": "Moutouri",
             "url": "https://www.moutouri.tn",
-            "logo": "https://www.moutouri.tn/logo.png",
+            "logo": "https://www.moutouri.tn/logo-moutouri.ico",
             "sameAs": [
               "https://www.facebook.com/moutouri",
               "https://www.instagram.com/moutouri"
