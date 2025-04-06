@@ -194,7 +194,7 @@ export default function CreateAdPage() {
             </p>
           </div>
           
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} encType="multipart/form-data">
             <Card>
               <CardHeader>
                 <CardTitle>Informations de la publicité</CardTitle>
@@ -324,6 +324,7 @@ export default function CreateAdPage() {
                     accept="image/*"
                     className="hidden"
                     ref={fileInputRef}
+                    name="image"
                     onChange={handleImageChange}
                     required
                   />
