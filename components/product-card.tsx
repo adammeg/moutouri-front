@@ -18,9 +18,9 @@ export function ProductCard({ product, actions, children }: ProductCardProps) {
   if (!product) return <></> 
 
   // Extract username nicely if it exists
-  const sellerName = product.user?.username || 
-                     product.user?.firstName || 
-                     (product.user?.email ? product.user.email.split('@')[0] : '');
+  const sellerName = product.publisher?.username || 
+                     product.publisher?.firstName || 
+                     (product.publisher?.email ? product.publisher.email.split('@')[0] : '');
 
   return (
     <Card className="overflow-hidden h-full flex flex-col">

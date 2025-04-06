@@ -62,7 +62,13 @@ export default function ProductDetailsPage() {
         // Get the product ID from the URL params
         const productId = params?.id as string
         const response = await getProductDetails(productId)
-        
+        if (product) {
+          console.log("Product seller data:", {
+            hasPublisher: !!product.publisher,
+            hasUser: !!product.user,
+            contactData: product.publisher || product.user
+          });
+        }
         if (response.success) {
           console.log("Product data:", response.product)
           setProduct(response.product)
@@ -83,7 +89,7 @@ export default function ProductDetailsPage() {
     }
 
     fetchProductDetails()
-  }, [params?.id, toast])
+  }, [params?.id, toast, product])
 
   // Show loading state
   if (loading) {
@@ -262,11 +268,11 @@ export default function ProductDetailsPage() {
             title={`${product.title} - ${product.price.toLocaleString()} DT | Moutouri`}
             description={product.description.substring(0, 160)}
             ogImage={product.images && product.images.length > 0 ? product.images[0] : '/og-image.png'}
-            canonical={`/products/${product._id}`}
+            canonical={`/products/${product.title}`}
           />
           <ProductJsonLd 
             product={product}
-            url={typeof window !== 'undefined' ? window.location.href : `https://moutouri.tn/products/${product._id}`}
+            url={typeof window !== 'undefined' ? window.location.href : `https://moutouri.tn/products/${product.title}`}
           />
         </>
       )}
