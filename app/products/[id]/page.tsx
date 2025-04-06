@@ -158,13 +158,13 @@ export default function ProductDetailsPage() {
   // Functions to navigate images
   const nextImage = () => {
     if (product.images && product.images.length > 0) {
-    setCurrentImageIndex((prev) => (prev + 1) % product.images.length)
+      setCurrentImageIndex((prev) => (prev + 1) % product.images.length)
     }
   }
 
   const prevImage = () => {
     if (product.images && product.images.length > 0) {
-    setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length)
+      setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length)
     }
   }
 
@@ -177,15 +177,15 @@ export default function ProductDetailsPage() {
     if (product?.publisher && typeof product.publisher === 'object') {
       return product.publisher;
     }
-    
+
     if (publisherData) {
       return publisherData;
     }
-    
+
     if (product?.user) {
       return product.user;
     }
-    
+
     return {};
   }
 
@@ -273,9 +273,9 @@ export default function ProductDetailsPage() {
   const handleSocialShare = (platform: string) => {
     const url = encodeURIComponent(window.location.href)
     const text = encodeURIComponent(`Découvrez ${product.title} à ${product.price} DT`)
-    
+
     let shareUrl = ''
-    
+
     switch (platform) {
       case 'facebook':
         shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`
@@ -292,7 +292,7 @@ export default function ProductDetailsPage() {
       default:
         break
     }
-    
+
     if (shareUrl) {
       window.open(shareUrl, '_blank', 'width=600,height=400')
     }
@@ -315,13 +315,13 @@ export default function ProductDetailsPage() {
     <DashboardLayout>
       {product && (
         <>
-          <SEO 
+          <SEO
             title={`${product.title} - ${product.price.toLocaleString()} DT | Moutouri`}
             description={product.description.substring(0, 160)}
             ogImage={product.images && product.images.length > 0 ? product.images[0] : '/og-image.png'}
             canonical={`/products/${product.title}`}
           />
-          <ProductJsonLd 
+          <ProductJsonLd
             product={product}
             url={typeof window !== 'undefined' ? window.location.href : `https://moutouri.tn/products/${product.title}`}
           />
@@ -368,7 +368,7 @@ export default function ProductDetailsPage() {
                   {product.images && product.images.length > 0 ? (
                     <img
                       src={product.images[currentImageIndex]}
-                    alt={`${product.title} - Image ${currentImageIndex + 1}`}
+                      alt={`${product.title} - Image ${currentImageIndex + 1}`}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -376,38 +376,38 @@ export default function ProductDetailsPage() {
                       <span className="text-gray-500">Pas d'image disponible</span>
                     </div>
                   )}
-                  
+
                   {product.images && product.images.length > 1 && (
                     <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 text-foreground hover:bg-background"
-                    onClick={prevImage}
-                  >
-                    <ChevronLeft className="h-6 w-6" />
-                    <span className="sr-only">Image précédente</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 text-foreground hover:bg-background"
-                    onClick={nextImage}
-                  >
-                    <ChevronRight className="h-6 w-6" />
-                    <span className="sr-only">Image suivante</span>
-                  </Button>
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-2 py-1 rounded-full bg-background/80">
-                        {product.images.map((image: string, index: number) => (
-                      <button
-                        key={index}
-                        className={`h-2 w-2 rounded-full ${index === currentImageIndex ? "bg-primary" : "bg-muted"}`}
-                        onClick={() => setCurrentImageIndex(index)}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 text-foreground hover:bg-background"
+                        onClick={prevImage}
                       >
-                        <span className="sr-only">Voir image {index + 1}</span>
-                      </button>
-                    ))}
-                  </div>
+                        <ChevronLeft className="h-6 w-6" />
+                        <span className="sr-only">Image précédente</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 text-foreground hover:bg-background"
+                        onClick={nextImage}
+                      >
+                        <ChevronRight className="h-6 w-6" />
+                        <span className="sr-only">Image suivante</span>
+                      </Button>
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-2 py-1 rounded-full bg-background/80">
+                        {product.images.map((image: string, index: number) => (
+                          <button
+                            key={index}
+                            className={`h-2 w-2 rounded-full ${index === currentImageIndex ? "bg-primary" : "bg-muted"}`}
+                            onClick={() => setCurrentImageIndex(index)}
+                          >
+                            <span className="sr-only">Voir image {index + 1}</span>
+                          </button>
+                        ))}
+                      </div>
                     </>
                   )}
                 </div>
@@ -475,71 +475,63 @@ export default function ProductDetailsPage() {
                   <CardContent>
                     {(() => {
                       const seller = getSeller();
-                      
+
                       return seller ? (
                         <div className="rounded-lg border p-4">
                           <div className="flex items-center gap-4">
                             <Avatar className="h-12 w-12">
-                              <AvatarImage 
-                                src={seller.image || '/images/placeholder-user.png'} 
-                                alt={`${seller.firstName || ''} ${seller.lastName || ''}`} 
+                              <AvatarImage
+                                src={seller.image || '/images/placeholder-user.png'}
+                                alt={`${seller.firstName || ''} ${seller.lastName || ''}`}
                               />
                               <AvatarFallback>
                                 {seller.firstName?.charAt(0) || seller.email?.charAt(0) || 'U'}
                               </AvatarFallback>
                             </Avatar>
-                            
+
                             <div>
                               <h4 className="font-medium">
                                 {`${seller.firstName || ''} ${seller.lastName || ''}`}
                                 {!seller.firstName && !seller.lastName && "Vendeur"}
                               </h4>
                               <p className="text-sm text-muted-foreground">
-                                Membre depuis {new Date(seller.createdAt).toLocaleDateString('fr-FR', {year: 'numeric', month: 'long'})}
+                                Membre depuis {new Date(seller.createdAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long' })}
                               </p>
                             </div>
                           </div>
-                          
+
                           <Separator className="my-4" />
-                          
+
                           <div className="space-y-2">
                             {seller.phone && (
                               <div className="flex items-center gap-2">
                                 <Phone className="h-4 w-4 text-muted-foreground" />
                                 <span>{seller.phone}</span>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="ml-auto h-7 px-2" 
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="ml-auto h-7 px-2"
                                   onClick={handleCallSeller}
                                 >
                                   Appeler
                                 </Button>
                               </div>
                             )}
-                            
+
                             {seller.email && (
                               <div className="flex items-center gap-2">
                                 <Mail className="h-4 w-4 text-muted-foreground" />
                                 <span>{seller.email}</span>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="ml-auto h-7 px-2" 
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="ml-auto h-7 px-2"
                                   onClick={() => handleCopyEmail()}
                                 >
                                   Contacter
                                 </Button>
                               </div>
                             )}
-                          </div>
-                          
-                          <div className="mt-4 flex justify-end">
-                            <Button variant="outline" size="sm" asChild>
-                              <Link href={`/profile/${seller._id}`}>
-                                Voir le profil
-                              </Link>
-                            </Button>
                           </div>
                         </div>
                       ) : (
@@ -553,7 +545,6 @@ export default function ProductDetailsPage() {
               </TabsContent>
             </Tabs>
           </div>
-
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -594,24 +585,23 @@ export default function ProductDetailsPage() {
                     <CardContent>
                       {(() => {
                         const seller = getSeller();
-                        
                         return (
                           <div className="space-y-4">
                             {seller?.phone ? (
                               <div className="flex items-center gap-3">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="h-9" 
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9"
                                   onClick={handleCallSeller}
                                 >
                                   <Phone className="mr-2 h-4 w-4" />
                                   Appeler
                                 </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="h-9" 
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9"
                                   onClick={handleCopyPhone}
                                 >
                                   <Copy className="mr-2 h-4 w-4" />
@@ -623,21 +613,7 @@ export default function ProductDetailsPage() {
                                 Numéro de téléphone non disponible
                               </p>
                             )}
-                            
-                            {seller?.email && (
-                              <div className="flex items-center gap-3">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="h-9"
-                                  onClick={handleCopyEmail}
-                                >
-                                  <Mail className="mr-2 h-4 w-4" />
-                                  Copier l'email
-                                </Button>
-                              </div>
-                            )}
-                            </div>
+                          </div>
                         );
                       })()}
                     </CardContent>
@@ -661,16 +637,14 @@ export default function ProductDetailsPage() {
           </div>
         </div>
       </div>
-
       <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Contacter le vendeur</DialogTitle>
             <DialogDescription>
-              Vous pouvez contacter {product?.publisher?.firstName} {product?.publisher?.lastName} par téléphone ou email.
+              Vous pouvez contacter {product?.publisher?.firstName} {product?.publisher?.lastName} par téléphone.
             </DialogDescription>
           </DialogHeader>
-          
           <div className="space-y-4 py-4">
             {product?.publisher?.phone ? (
               <div className="flex flex-col space-y-2">
@@ -690,7 +664,6 @@ export default function ProductDetailsPage() {
             ) : (
               <p className="text-sm text-muted-foreground">Numéro de téléphone non disponible</p>
             )}
-            
             {product?.publisher?.email && (
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium">Email</label>
@@ -701,9 +674,9 @@ export default function ProductDetailsPage() {
                   <Button variant="outline" size="icon" onClick={handleCopyEmail}>
                     <Copy className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="default" 
-                    size="icon" 
+                  <Button
+                    variant="default"
+                    size="icon"
                     onClick={() => window.location.href = `mailto:${product.publisher.email}`}
                   >
                     <Mail className="h-4 w-4" />
@@ -712,7 +685,6 @@ export default function ProductDetailsPage() {
               </div>
             )}
           </div>
-          
           <div className="mt-4">
             <p className="text-sm text-muted-foreground">
               Pour votre sécurité, ne partagez jamais vos informations bancaires et privilégiez les rencontres dans des lieux publics.
@@ -720,7 +692,6 @@ export default function ProductDetailsPage() {
           </div>
         </DialogContent>
       </Dialog>
-
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -729,20 +700,19 @@ export default function ProductDetailsPage() {
               Partagez "{product?.title}" avec vos amis ou sur les réseaux sociaux.
             </DialogDescription>
           </DialogHeader>
-          
           <div className="grid gap-4 py-4">
-            <Button 
-              variant="outline" 
-              className="flex justify-start items-center gap-2" 
+            <Button
+              variant="outline"
+              className="flex justify-start items-center gap-2"
               onClick={handleCopyLink}
             >
               <Copy className="h-4 w-4" />
               Copier le lien
             </Button>
-            
+
             {typeof navigator !== 'undefined' && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex justify-start items-center gap-2"
                 onClick={handleNativeShare}
               >
@@ -750,25 +720,23 @@ export default function ProductDetailsPage() {
                 Partager sur votre appareil
               </Button>
             )}
-            
             <Separator />
-            
             <div className="grid grid-cols-2 gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex justify-start items-center gap-2"
                 onClick={() => handleSocialShare('facebook')}
               >
                 <Facebook className="h-4 w-4 text-blue-600" />
                 Facebook
               </Button>
-              
 
-              
 
-              
-              <Button 
-                variant="outline" 
+
+
+
+              <Button
+                variant="outline"
                 className="flex justify-start items-center gap-2"
                 onClick={() => handleSocialShare('whatsapp')}
               >
@@ -777,7 +745,6 @@ export default function ProductDetailsPage() {
               </Button>
             </div>
           </div>
-          
           <div className="mt-2 text-sm text-muted-foreground">
             <p>Le lien partagé dirigera vers cette page de détails du produit.</p>
           </div>
