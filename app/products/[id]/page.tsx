@@ -91,6 +91,16 @@ export default function ProductDetailsPage() {
     fetchProductDetails()
   }, [params?.id, toast])
 
+  useEffect(() => {
+    console.log("FULL PRODUCT DATA:", JSON.stringify(product, null, 2));
+    console.log("Seller data availability:", {
+      hasPublisher: !!product?.publisher,
+      publisherData: product?.publisher,
+      hasUser: !!product?.user,
+      userData: product?.user
+    });
+  }, [product]);
+
   // Show loading state
   if (loading) {
     return (
@@ -142,36 +152,39 @@ export default function ProductDetailsPage() {
   }
 
   const handleCallSeller = () => {
-    if (product.publisher?.phone) {
-      window.location.href = `tel:${product.publisher.phone}`
+    const seller = product.publisher || product.user;
+    if (seller?.phone) {
+      window.location.href = `tel:${seller.phone}`;
     } else {
       toast({
-        title: "Numéro non disponible",
-        description: "Le numéro de téléphone du vendeur n'est pas disponible.",
+        title: "Numéro indisponible",
+        description: "Le vendeur n'a pas fourni de numéro de téléphone.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const handleCopyPhone = () => {
-    if (product.publisher?.phone) {
-      navigator.clipboard.writeText(product.publisher.phone)
+    const seller = product.publisher || product.user;
+    if (seller?.phone) {
+      navigator.clipboard.writeText(seller.phone);
       toast({
         title: "Numéro copié",
         description: "Le numéro de téléphone a été copié dans le presse-papiers.",
-      })
+      });
     }
-  }
+  };
 
   const handleCopyEmail = () => {
-    if (product.publisher?.email) {
-      navigator.clipboard.writeText(product.publisher.email)
-    toast({
+    const seller = product.publisher || product.user;
+    if (seller?.email) {
+      navigator.clipboard.writeText(seller.email);
+      toast({
         title: "Email copié",
         description: "L'adresse email a été copiée dans le presse-papiers.",
-    })
+      });
     }
-  }
+  };
 
   const handleSaveProduct = () => {
     toast({
@@ -422,32 +435,81 @@ export default function ProductDetailsPage() {
                     <CardTitle>À propos du Vendeur</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {product.publisher ? (
-                    <div className="flex items-center gap-4 mb-4">
-                      <Avatar className="h-16 w-16">
-                          <AvatarImage src={product.publisher.image} alt={product.publisher.firstName} />
-                          <AvatarFallback>{product.publisher.firstName?.[0] || "U"}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-semibold">
-                              {product.publisher.firstName} {product.publisher.lastName}
-                            </h3>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                          <User className="h-3 w-3" />
-                            <span>Membre depuis {formatDate(product.publisher.createdAt)}</span>
-                        </div>
-                        </div>
-                        <Advertisement 
-            position="sidebar" 
-            maxHeight={400}
-          />
-                      </div>
+                    {(() => {
+                      const seller = product.publisher || product.user;
                       
-                    ) : (
-                      <p>Information sur le vendeur non disponible</p>
-                    )}
+                      return seller ? (
+                        <div className="rounded-lg border p-4">
+                          <div className="flex items-center gap-4">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage 
+                                src={seller.image || '/images/placeholder-user.png'} 
+                                alt={`${seller.firstName || ''} ${seller.lastName || ''}`} 
+                              />
+                              <AvatarFallback>
+                                {seller.firstName?.charAt(0) || seller.email?.charAt(0) || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            
+                            <div>
+                              <h4 className="font-medium">
+                                {`${seller.firstName || ''} ${seller.lastName || ''}`}
+                                {!seller.firstName && !seller.lastName && "Vendeur"}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                Membre depuis {new Date(seller.createdAt).toLocaleDateString('fr-FR', {year: 'numeric', month: 'long'})}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <Separator className="my-4" />
+                          
+                          <div className="space-y-2">
+                            {seller.phone && (
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                <span>{seller.phone}</span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="ml-auto h-7 px-2" 
+                                  onClick={handleCallSeller}
+                                >
+                                  Appeler
+                                </Button>
+                              </div>
+                            )}
+                            
+                            {seller.email && (
+                              <div className="flex items-center gap-2">
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                                <span>{seller.email}</span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="ml-auto h-7 px-2" 
+                                  onClick={() => handleCopyEmail()}
+                                >
+                                  Contacter
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="mt-4 flex justify-end">
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/profile/${seller._id}`}>
+                                Voir le profil
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-lg border p-4 text-center text-muted-foreground">
+                          Information sur le vendeur non disponible
+                        </div>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -484,10 +546,64 @@ export default function ProductDetailsPage() {
                 </div>
                 <Separator />
                 <div className="space-y-2">
-                  <Button className="w-full" onClick={handleContactSeller}>
-                    <Phone className="mr-2 h-4 w-4" />
-                    Contacter le Vendeur
-                  </Button>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Contacter le vendeur</CardTitle>
+                      <CardDescription>
+                        Vous pouvez contacter par téléphone ou email.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {(() => {
+                        const seller = product.publisher || product.user;
+                        
+                        return (
+                          <div className="space-y-4">
+                            {seller?.phone ? (
+                              <div className="flex items-center gap-3">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-9" 
+                                  onClick={handleCallSeller}
+                                >
+                                  <Phone className="mr-2 h-4 w-4" />
+                                  Appeler
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-9" 
+                                  onClick={handleCopyPhone}
+                                >
+                                  <Copy className="mr-2 h-4 w-4" />
+                                  Copier le numéro
+                                </Button>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                Numéro de téléphone non disponible
+                              </p>
+                            )}
+                            
+                            {seller?.email && (
+                              <div className="flex items-center gap-3">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-9"
+                                  onClick={handleCopyEmail}
+                                >
+                                  <Mail className="mr-2 h-4 w-4" />
+                                  Copier l'email
+                                </Button>
+                              </div>
+                            )}
+                            </div>
+                        );
+                      })()}
+                    </CardContent>
+                  </Card>
                   <Button variant="outline" className="w-full" onClick={handleSaveProduct}>
                     <Heart className="mr-2 h-4 w-4" />
                     Sauvegarder
