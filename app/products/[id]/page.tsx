@@ -89,7 +89,7 @@ export default function ProductDetailsPage() {
     }
 
     fetchProductDetails()
-  }, [params?.id, toast, product])
+  }, [params?.id, toast])
 
   // Show loading state
   if (loading) {
