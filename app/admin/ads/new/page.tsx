@@ -174,6 +174,40 @@ export default function CreateAdPage() {
           description: "L'annonce publicitaire a été créée avec succès",
         });
         router.push("/admin?tab=ads");
+      } else if (response.error && response.error.includes("Invalid api_key")) {
+        toast({
+          title: "Erreur avec le serveur d'images",
+          description: "Tentative de téléchargement direct...",
+          duration: 5000,
+        });
+        
+        try {
+          const directUrl = await uploadToCloudinary(adImage);
+          
+          const newFormData = new FormData();
+          Object.entries(formData).forEach(([key, value]) => {
+            if (key !== 'image') {
+              newFormData.append(key, value as string);
+            }
+          });
+          
+          newFormData.append("image", directUrl);
+          
+          const retryResponse = await createAd(newFormData, token);
+          
+          if (retryResponse.success) {
+            toast({
+              title: "Annonce créée",
+              description: "L'annonce publicitaire a été créée avec succès",
+            });
+            router.push("/admin?tab=ads");
+          } else {
+            throw new Error(retryResponse.message || "Erreur lors de la création de l'annonce");
+          }
+        } catch (directError) {
+          console.error("Direct upload error:", directError);
+          throw new Error("Erreur lors du téléchargement de l'image");
+        }
       } else {
         throw new Error(response.message || "Erreur lors de la création de l'annonce");
       }
