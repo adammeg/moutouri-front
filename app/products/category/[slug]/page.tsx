@@ -6,15 +6,12 @@ import { getCategoryBySlug } from "@/services/categories";
 import { getProductsByCategory } from "@/services/products";
 import Breadcrumbs from "@/components/breadcrumbs";
 
-// Handle dynamic route params
-interface CategoryPageProps {
-  params: {
-    slug: string;
-  };
-}
-
-// Dynamic metadata generation for category pages
-export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+// Metadata function
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
   const category = await getCategoryBySlug(params.slug);
   
   if (!category) {
@@ -43,8 +40,12 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   };
 }
 
-// Default export with properly typed props
-export default async function CategoryPage({ params }: CategoryPageProps) {
+// Page component 
+export default async function CategoryPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const category = await getCategoryBySlug(params.slug);
   
   if (!category) {
