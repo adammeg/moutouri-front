@@ -12,9 +12,29 @@ import SchemaMarkup from "@/components/schema-markup"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Moutouri - Marketplace de Motos",
-  description: "Achetez, vendez et échangez des motos, scooters et pièces",
-  generator: 'Moutouri'
+  title: "Moutouri - Premier Marketplace de Motos et Scooters en Tunisie",
+  description: "Achetez, vendez et échangez des motos, scooters, pièces détachées et accessoires. Large sélection de Honda, Yamaha, SYM, Vespa et autres marques en Tunisie.",
+  keywords: "moto tunisie, scooter tunisie, vente moto, achat scooter, pièces détachées moto, accessoires scooter, Honda, Yamaha, Vespa, SYM",
+  metadataBase: new URL("https://moutouri.tn"),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: "Moutouri - Le Marketplace des Motos et Scooters en Tunisie",
+    description: "Plateforme spécialisée pour l'achat et la vente de deux-roues en Tunisie. Trouvez votre prochaine moto ou scooter parmi des milliers d'annonces.",
+    url: 'https://moutouri.tn',
+    siteName: 'Moutouri',
+    locale: 'fr_TN',
+    type: 'website',
+    images: [
+      {
+        url: 'https://moutouri.tn/logo-moutouri.ico',
+        width: 1200,
+        height: 630,
+        alt: 'Moutouri - Marketplace des Motos et Scooters'
+      }
+    ]
+  }
 }
 
 export const viewport: Viewport = {

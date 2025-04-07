@@ -26,13 +26,13 @@ export function ProductCard({ product, actions, children }: ProductCardProps) {
     <Card className="overflow-hidden h-full flex flex-col">
       <div className="relative aspect-[4/3] overflow-hidden">
         <Link href={`/products/${product._id}`}>
-          <Image
-            src={product.images?.[0] || '/placeholder.png'}
-            alt={product.title}
-            className="object-cover transition-transform hover:scale-105"
-            fill
-            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 25vw"
-          />
+        <Image
+  src={product.images[0]}
+  alt={`${product.title} - ${(product.title) || ''} ${product.year || ''} ${product.condition || ''} à ${product.price} DT en Tunisie`}
+  width={400}
+  height={300}
+  className="object-cover w-full h-full transition-all duration-300 group-hover:scale-105"
+/>
         </Link>
         {product.condition && (
           <Badge 

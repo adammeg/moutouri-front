@@ -27,6 +27,18 @@ export function ProductJsonLd({ product, url }: ProductJsonLdProps) {
     name: product.title,
     description: product.description,
     image: product.images && product.images.length > 0 ? product.images : [],
+    brand: getBrandFromTitle(product.title),
+    vehicleEngine: {
+      '@type': 'EngineSpecification',
+      engineDisplacement: product.cylinder ? `${product.cylinder} cc` : undefined,
+    },
+    vehicleConfiguration: product.condition,
+    mileageFromOdometer: {
+      '@type': 'QuantitativeValue',
+      value: product.kilometrage || 0,
+      unitCode: 'KMT'
+    },
+    modelDate: product.year ? `${product.year}` : undefined,
     offers: {
       '@type': 'Offer',
       price: product.price,
@@ -35,16 +47,7 @@ export function ProductJsonLd({ product, url }: ProductJsonLdProps) {
       availability: 'https://schema.org/InStock',
       url: url
     },
-    ...(product.year && { productionDate: `${product.year}` }),
-    ...(product.color && { color: product.color }),
-    ...(product.category && { category: product.category.name }),
-    ...(product.kilometrage && { 
-      additionalProperty: {
-        '@type': 'PropertyValue',
-        name: 'kilometrage',
-        value: `${product.kilometrage} km`
-      }
-    })
+    category: product.category ? product.category.name : undefined,
   };
 
   return (
@@ -67,4 +70,21 @@ function mapConditionToSchema(condition: string): string {
   };
   
   return conditionMap[condition] || 'UsedCondition';
+}
+
+// Helper to extract brand from product title
+function getBrandFromTitle(title: string): string | undefined {
+  const commonBrands = [
+    'Honda', 'Yamaha', 'Kawasaki', 'Suzuki', 'BMW', 'Ducati', 
+    'Vespa', 'Piaggio', 'SYM', 'Kymco', 'Aprilia', 'KTM', 
+    'Harley-Davidson', 'Royal Enfield', 'Triumph', 'MBK'
+  ];
+  
+  for (const brand of commonBrands) {
+    if (title.toLowerCase().includes(brand.toLowerCase())) {
+      return brand;
+    }
+  }
+  
+  return undefined;
 } 
