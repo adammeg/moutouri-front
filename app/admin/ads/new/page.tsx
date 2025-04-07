@@ -103,15 +103,38 @@ export default function CreateAdPage() {
     try {
       setIsSubmitting(true)
       
-      const token = getAuthToken()
+      const token = getAuthToken() || localStorage.getItem('token') || localStorage.getItem('accessToken');
+      
+      console.log("Auth token available:", !!token, "Length:", token?.length || 0);
       
       if (!token) {
         toast({
           title: "Erreur d'authentification",
           description: "Votre session a expiré, veuillez vous reconnecter",
           variant: "destructive",
-        })
-        return
+          duration: 5000,
+        });
+        return;
+      }
+
+      if (adImage && adImage.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Image trop volumineuse",
+          description: "L'image ne doit pas dépasser 5MB",
+          variant: "destructive",
+          duration: 5000,
+        });
+        return;
+      }
+
+      if (adEndDate && adStartDate && adEndDate < adStartDate) {
+        toast({
+          title: "Dates invalides",
+          description: "La date de fin doit être après la date de début",
+          variant: "destructive",
+          duration: 5000,
+        });
+        return;
       }
 
       const formData = new FormData()
@@ -126,40 +149,33 @@ export default function CreateAdPage() {
       }
       
       if (adLink) {
-        formData.append("link", adLink)
+        const formattedLink = adLink.startsWith('http') ? adLink : `https://${adLink}`;
+        formData.append("link", formattedLink)
       }
       
       if (adImage) {
         formData.append("image", adImage)
       }
 
-      console.log("Submitting ad with token:", token?.substring(0, 15) + "...")
-      
-      console.log("FormData contents:", {
+      console.log("Submitting ad form data:", {
         title: adTitle,
         description: adDescription.substring(0, 30) + "...",
         position: adPosition,
         isActive: adIsActive,
-        startDate: adStartDate.toISOString(),
-        endDate: adEndDate?.toISOString(),
-        hasLink: !!adLink,
         hasImage: !!adImage,
-        imageType: adImage?.type,
-        imageSize: adImage ? `${(adImage.size / 1024).toFixed(2)} KB` : "N/A"
-      })
+        imageType: adImage?.type
+      });
       
-      const response = await createAd(formData, token)
-      
-      console.log("API Response:", response)
+      const response = await createAd(formData, token);
       
       if (response.success) {
         toast({
           title: "Annonce créée",
           description: "L'annonce publicitaire a été créée avec succès",
-        })
-        router.push("/admin?tab=ads")
+        });
+        router.push("/admin?tab=ads");
       } else {
-        throw new Error(response.message || "Erreur lors de la création de l'annonce")
+        throw new Error(response.message || "Erreur lors de la création de l'annonce");
       }
     } catch (error) {
       console.error("Error creating ad:", error)

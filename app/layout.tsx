@@ -7,7 +7,6 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from '@/contexts/auth-context'
 import { Toaster } from "@/components/ui/toaster"
-import { ToastProvider } from "@/components/ui/toast"
 import SchemaMarkup from "@/components/schema-markup"
 
 const inter = Inter({ subsets: ["latin"] })
