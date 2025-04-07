@@ -38,6 +38,7 @@ import { fr } from 'date-fns/locale'
 import { useAuth } from "@/contexts/auth-context"
 import { createAd } from "@/services/ads"
 import ProtectedRoute from "@/components/protected-route"
+import { uploadToCloudinary } from "@/services/cloudinary-upload"
 
 export default function CreateAdPage() {
   const router = useRouter()
