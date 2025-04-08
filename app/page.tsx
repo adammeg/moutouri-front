@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import { ArrowRight, Clock, Award, MapPin, ChevronRight, TrendingUp, Tag } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import PopularSearchTerms from "@/components/popular-search-terms";
 import SEOContentSection from "@/components/seo-content-section";
 import FAQSchema from "@/components/faq-schema";
 import SchemaMarkup from "@/components/schema-markup";
+import SearchHeroBackground from "@/components/search-hero-background";
 
 export default async function HomePage() {
   // Fetch latest products
@@ -55,9 +57,11 @@ export default async function HomePage() {
               Trouvez la moto, le scooter ou les pièces que vous cherchez parmi des milliers d'annonces
             </p>
             
-            {/* Search component */}
+            {/* Search component wrapped in Suspense */}
             <div className="w-full max-w-3xl">
-              <ProductSearch className="bg-white shadow-lg rounded-lg" />
+              <Suspense fallback={<div className="h-14 bg-white/80 animate-pulse rounded-lg"></div>}>
+                <ProductSearch className="bg-white shadow-lg rounded-lg" />
+              </Suspense>
             </div>
           </div>
         </div>
