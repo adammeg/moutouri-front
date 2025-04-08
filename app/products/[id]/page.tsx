@@ -44,6 +44,7 @@ import {
 import SEO from "@/components/seo"
 import { ProductJsonLd } from "@/components/product-json-ld"
 import { Advertisement } from '@/components/advertisement'
+import ProtectedRoute from "@/components/protected-route"
 
 export default function ProductDetailsPage() {
   const params = useParams()
@@ -312,6 +313,8 @@ export default function ProductDetailsPage() {
   }
 
   return (
+    <ProtectedRoute allowUnauthenticated={true}>
+
     <DashboardLayout>
       {product && (
         <>
@@ -751,5 +754,7 @@ export default function ProductDetailsPage() {
         </DialogContent>
       </Dialog>
     </DashboardLayout>
+    </ProtectedRoute>
+
   )
 }

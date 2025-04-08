@@ -2,9 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { BikeIcon as Motorcycle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -14,12 +14,15 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 
 import { loginUser } from "@/services/auth"
+
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams?.get("redirectTo") || "/dashboard"
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,7 +49,7 @@ export default function LoginPage() {
         // Add a small delay to ensure state is updated before navigation
         setTimeout(() => {
           // Force page reload to ensure auth context is properly initialized with new tokens
-          window.location.href = response.user.role === 'admin' ? '/admin' : '/dashboard';
+          router.push(redirectTo);
         }, 300);
       } else {
         throw new Error(response.message || "Une erreur s'est produite");

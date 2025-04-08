@@ -7,11 +7,13 @@ import { useAuth } from '@/contexts/auth-context';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   adminOnly?: boolean;
+  allowUnauthenticated?: boolean;
 }
 
 export default function ProtectedRoute({ 
   children, 
-  adminOnly = false 
+  adminOnly = false,
+  allowUnauthenticated = false
 }: ProtectedRouteProps) {
   const { user, isLoading, isAdmin } = useAuth();
   const router = useRouter();
@@ -24,12 +26,13 @@ export default function ProtectedRoute({
       isAuthenticated, 
       isAdmin, 
       isLoading,
-      adminOnly
+      adminOnly,
+      allowUnauthenticated
     });
     
     // Only redirect when we're sure that authentication has been checked
     if (!isLoading) {
-      if (!isAuthenticated) {
+      if (!isAuthenticated && !allowUnauthenticated) {
         console.log("⚠️ Not authenticated, redirecting to login");
         // Use window.location.href instead of router.push for a full page reload
         window.location.href = '/login';
@@ -38,7 +41,7 @@ export default function ProtectedRoute({
         router.push('/dashboard');
       }
     }
-  }, [isAuthenticated, isAdmin, isLoading, router, adminOnly]);
+  }, [isAuthenticated, isAdmin, isLoading, router, adminOnly, allowUnauthenticated]);
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -46,10 +49,10 @@ export default function ProtectedRoute({
   }
 
   // Don't render children if not authenticated or not admin for admin routes
-  if (!isAuthenticated || (adminOnly && !isAdmin)) {
+  if ((!isAuthenticated && !allowUnauthenticated) || (adminOnly && !isAdmin)) {
     return null;
   }
 
-  // User is authenticated and has proper permissions, render children
+  // User is authenticated or allowUnauthenticated is true, render children
   return <>{children}</>;
 } 
