@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { BikeIcon as Motorcycle } from "lucide-react"
@@ -15,7 +14,8 @@ import { useToast } from "@/hooks/use-toast"
 
 import { loginUser } from "@/services/auth"
 
-export default function LoginPage() {
+// Extract login form to a separate component to use useSearchParams inside Suspense
+function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -41,14 +41,13 @@ export default function LoginPage() {
         });
         
         // Store user info manually to ensure it's available
-        
         localStorage.setItem('user', JSON.stringify(response.user));
         localStorage.setItem('accessToken', response.accessToken);
         localStorage.setItem('refreshToken', response.refreshToken);
         
         // Add a small delay to ensure state is updated before navigation
         setTimeout(() => {
-          // Force page reload to ensure auth context is properly initialized with new tokens
+          // Navigate to the redirectTo URL or admin/dashboard
           router.push(redirectTo);
         }, 300);
       } else {
@@ -66,6 +65,43 @@ export default function LoginPage() {
   };
 
   return (
+    <form onSubmit={handleLogin} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="votre.email@exemple.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Mot de passe</Label>
+          <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+            Mot de passe oublié?
+          </Link>
+        </div>
+        <Input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? "Connexion en cours..." : "Se connecter"}
+      </Button>
+    </form>
+  );
+}
+
+// Main login page component with Suspense
+export default function LoginPage() {
+  return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black to-background p-4">
       <Card className="w-full max-w-md border-2 border-primary/20">
         <CardHeader className="text-center">
@@ -76,37 +112,9 @@ export default function LoginPage() {
           <CardDescription>Accédez à votre compte Moutouri</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="votre.email@exemple.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Mot de passe</Label>
-                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                  Mot de passe oublié?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Connexion en cours..." : "Se connecter"}
-            </Button>
-          </form>
+          <Suspense fallback={<div className="h-48 animate-pulse bg-muted/20 rounded-lg"></div>}>
+            <LoginForm />
+          </Suspense>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-center text-sm">
