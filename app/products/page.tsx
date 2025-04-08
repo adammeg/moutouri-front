@@ -205,114 +205,115 @@ function ProductsContent() {
       <Advertisement position="home-top" className="mb-8" />
 
       {/* Products Tabs */}
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="flex flex-wrap mb-6">
-          <TabsTrigger value="all">Tous</TabsTrigger>
+      <div className="overflow-x-auto mb-6 hide-scrollbar">
+        <TabsList className="inline-flex w-auto flex-nowrap space-x-2">
+          <TabsTrigger value="all" className="whitespace-nowrap">Tous</TabsTrigger>
           {categories.map((category) => (
-            <TabsTrigger key={category._id} value={category._id}>
+            <TabsTrigger 
+              key={category._id} 
+              value={category._id}
+              className="whitespace-nowrap"
+            >
               {category.name}
             </TabsTrigger>
           ))}
         </TabsList>
+      </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <div className="aspect-square bg-muted rounded-t-lg"></div>
-                <CardContent className="p-3">
-                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <>
-            <TabsContent value="all" className="mt-6">
-              {products.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
-                    {products.slice(0, 8).map((product: any) => (
-                      <ProductCard
-                        key={product._id}
-                        product={product}
-                      />
-                    ))}
-                  </div>
-                  
-                  {/* Middle advertisement */}
-                  <Advertisement position="home-middle" className="my-8" />
+      {isLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <div className="aspect-square bg-muted rounded-t-lg"></div>
+              <CardContent className="p-3">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <>
+          <TabsContent value="all" className="mt-6">
+            {products.length > 0 ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
+                  {products.slice(0, 8).map((product: any) => (
+                    <ProductCard
+                      key={product._id}
+                      product={product}
+                    />
+                  ))}
+                </div>
+                
+                {/* Middle advertisement */}
+                <Advertisement position="home-middle" className="my-8" />
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-                    {products.slice(8).map((product: any) => (
-                      <ProductCard
-                        key={product._id}
-                        product={product}
-                      />
-                    ))}
-                  </div>
-                </>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+                  {products.slice(8).map((product: any) => (
+                    <ProductCard
+                      key={product._id}
+                      product={product}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Package className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Aucun produit disponible</h3>
+                <p className="text-muted-foreground max-w-md mb-6">
+                  {searchQuery ? `Aucun résultat pour "${searchQuery}"` : "Soyez le premier à publier une annonce sur notre plateforme."}
+                </p>
+                <div className="flex justify-end mb-6">
+                  {isAuthenticated ? (
+                    <Button asChild>
+                      <Link href="/products/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Publier une annonce
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button asChild>
+                      <Link href="/login?redirectTo=/products/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Connexion pour publier
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Dynamic category tabs */}
+          {categories.map((category) => (
+            <TabsContent key={category._id} value={category._id} className="mt-6">
+              {getProductsByCategory(category._id).length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+                  {getProductsByCategory(category._id).map((product: any) => (
+                    <ProductCard
+                      key={product._id}
+                      product={product}
+                    />
+                  ))}
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <Package className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Aucun produit disponible</h3>
+                  <h3 className="text-lg font-medium mb-2">Aucun produit dans {category.name}</h3>
                   <p className="text-muted-foreground max-w-md mb-6">
-                    {searchQuery ? `Aucun résultat pour "${searchQuery}"` : "Soyez le premier à publier une annonce sur notre plateforme."}
+                    Soyez le premier à publier une annonce dans cette catégorie.
                   </p>
-                  <div className="flex justify-end mb-6">
-                    {isAuthenticated ? (
-                      <Button asChild>
-                        <Link href="/products/new">
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Publier une annonce
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button asChild>
-                        <Link href="/login?redirectTo=/products/new">
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Connexion pour publier
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
+                  <Button asChild>
+                    <Link href="/products/new">Publier une annonce</Link>
+                  </Button>
                 </div>
               )}
             </TabsContent>
-
-            {/* Dynamic category tabs */}
-            {categories.map((category) => (
-              <TabsContent key={category._id} value={category._id} className="mt-6">
-                {getProductsByCategory(category._id).length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-                    {getProductsByCategory(category._id).map((product: any) => (
-                      <ProductCard
-                        key={product._id}
-                        product={product}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <Package className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Aucun produit dans {category.name}</h3>
-                    <p className="text-muted-foreground max-w-md mb-6">
-                      Soyez le premier à publier une annonce dans cette catégorie.
-                    </p>
-                    <Button asChild>
-                      <Link href="/products/new">Publier une annonce</Link>
-                    </Button>
-                  </div>
-                )}
-              </TabsContent>
-            ))}
-          </>
-        )}
-      </Tabs>
-      
-      {/* Bottom advertisement */}
-      <Advertisement position="home-bottom" className="mt-12" />
+          ))}
+        </>
+      )}
     </div>
   );
 }

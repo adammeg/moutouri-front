@@ -87,3 +87,21 @@
   background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary-dark)));
 }
 
+/* Add this to hide scrollbars while allowing scrolling */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Make tab triggers more compact on mobile */
+@media (max-width: 640px) {
+  .tabs-trigger {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
