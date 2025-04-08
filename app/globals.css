@@ -30,6 +30,7 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-ring: 220 70% 50%;
+    --primary-dark: 220 70% 40%;
   }
   .adsense-container {
     margin: 2rem 0;
@@ -69,6 +70,7 @@
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --primary-dark: 217.2 91.2% 49.8%;
   }
 }
 
@@ -79,5 +81,9 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary-dark)));
 }
 
