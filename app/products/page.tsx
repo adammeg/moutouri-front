@@ -33,14 +33,13 @@ function ProductsContent() {
   const { toast } = useToast()
   const searchParams = useSearchParams()
   const router = useRouter()
-  const initialQuery = searchParams?.get('q') || ''
   const { isAuthenticated } = useAuth()
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Fetch categories and products
+  // Fetch categories and products when search parameters change
   useEffect(() => {
     if (!isMounted) return;
 
@@ -65,6 +64,8 @@ function ProductsContent() {
         // Set active tab based on category param if present
         if (categoryParam) {
           setActiveTab(categoryParam)
+        } else {
+          setActiveTab("all")
         }
 
         // Build filter object from URL parameters
@@ -86,15 +87,22 @@ function ProductsContent() {
           filters.maxPrice = maxPrice
         }
 
+        console.log("Fetching products with filters:", filters)
         // Fetch products with filters
-        const response = await getProducts(filters)
-        setProducts(response.products || [])
-      } catch (error) {
-        console.error("Error fetching data:", error)
-        setError("Impossible de charger les données. Veuillez réessayer.")
+        const productsResponse = await getProducts(filters)
+        
+        if (productsResponse.success) {
+          console.log(`Found ${productsResponse.products.length} products matching filters`)
+          setProducts(productsResponse.products || [])
+        } else {
+          setError(productsResponse.message || "Failed to load products")
+        }
+      } catch (error: any) {
+        console.error("Error in fetchCategoriesAndProducts:", error)
+        setError(error.message || "An error occurred while loading the page")
         toast({
-          title: "Erreur",
-          description: "Impossible de charger les données. Veuillez réessayer.",
+          title: "Error",
+          description: error.message || "Failed to load products",
           variant: "destructive",
         })
       } finally {
@@ -103,118 +111,103 @@ function ProductsContent() {
     }
 
     fetchCategoriesAndProducts()
-  }, [toast, searchParams, isMounted])
+    // This effect should run whenever searchParams changes
+  }, [searchParams, isMounted, toast])
 
+  // Function to handle search submission
   const handleSearch = (query: string) => {
-    setIsLoading(true);
-    // Create new URL with search params
-    const params = new URLSearchParams(searchParams?.toString());
-
+    const params = new URLSearchParams(searchParams?.toString() || "")
+    
     if (query) {
-      params.set('q', query);
+      params.set('q', query)
     } else {
-      params.delete('q');
+      params.delete('q')
     }
-
-    // Update category if present
-    const category = searchParams?.get('category');
-    if (category) {
-      params.set('category', category);
-    }
-
-    // Navigate to new URL
-    router.push(`/products?${params.toString()}`);
-  };
-
-  const handleTabChange = async (value: string) => {
-    setActiveTab(value)
-    setIsLoading(true)
-
-    try {
-      const filters: any = {}
-
-      // If not "all", add category filter
-      if (value !== "all") {
-        filters.category = value
-      }
-
-      // Keep search query if exists
-      if (searchQuery) {
-        filters.search = searchQuery
-      }
-
-      const response = await getProducts(filters)
-      setProducts(response.products || [])
-    } catch (error) {
-      console.error("Error fetching filtered products:", error)
-      toast({
-        title: "Erreur",
-        description: "Impossible de filtrer les produits.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+    
+    router.push(`/products?${params.toString()}`)
   }
 
-  // Get products for a specific category
+  // Function to handle tab change (category filter)
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    
+    const params = new URLSearchParams(searchParams?.toString() || "")
+    
+    if (value === "all") {
+      params.delete('category')
+    } else {
+      params.set('category', value)
+    }
+    
+    router.push(`/products?${params.toString()}`)
+  }
+
+  // Helper function to get products by category
   const getProductsByCategory = (categoryId: string) => {
-    return products.filter((product: any) =>
-      typeof product.category === 'object'
-        ? product.category._id === categoryId
-        : product.category === categoryId
+    return products.filter(product => 
+      product.category && product.category._id === categoryId
     )
+  }
+
+  if (!isMounted) {
+    return <div className="flex items-center justify-center h-96">
+      <Loader2 className="h-12 w-12 text-primary animate-spin" />
+    </div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Produits</h1>
-            <p className="text-muted-foreground">
-              Découvrez les motos, scooters et pièces disponibles
-            </p>
-          </div>
-          <div className="flex justify-end mb-6">
-            {isAuthenticated ? (
-              <Button asChild>
-                <Link href="/products/new">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Publier une annonce
-                </Link>
-              </Button>
-            ) : (
-              <Button asChild>
-                <Link href="/login?redirectTo=/products/new">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Connexion pour publier
-                </Link>
-              </Button>
-            )}
-          </div>
-        </div>
+      {/* SEO */}
+      <SEO 
+        title="Motos et Scooters à vendre en Tunisie | Moutouri"
+        description="Trouvez votre prochaine moto ou scooter parmi des centaines d'annonces en Tunisie. Achetez et vendez facilement des motos, scooters et pièces détachées."
+      />
+      
+      {/* Search Bar */}
+      <ProductSearch 
+        onSearch={handleSearch} 
+        className="mb-6"
+      />
+      
+      {/* Error Message */}
+      {error && (
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="p-6 flex items-start">
+            <AlertCircle className="h-5 w-5 text-destructive mr-2 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-destructive">Error</h3>
+              <p className="text-sm text-muted-foreground">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Search bar */}
-        <ProductSearch
-          onSearch={(query, filters) => {
-            // You can handle the search here if needed
-            console.log("Search query:", query);
-            console.log("Applied filters:", filters);
-          }}
-          className="mb-8"
-        />
+      {/* "Publish Ad" button for authenticated users, "Login to publish" for guests */}
+      <div className="flex justify-end mb-6">
+        {isAuthenticated ? (
+          <Button asChild>
+            <Link href="/products/new">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Publier une annonce
+            </Link>
+          </Button>
+        ) : (
+          <Button asChild>
+            <Link href="/login?redirectTo=/products/new">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Connexion pour publier
+            </Link>
+          </Button>
+        )}
       </div>
 
-      {/* Top advertisement */}
-      <Advertisement 
-        position="home-hero" 
-        className="mb-8"
-      />
+      {/* Advertisement */}
+      <Advertisement position="home-top" className="mb-8" />
 
-      <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="w-full border-b pb-px overflow-x-auto flex-nowrap">
-          <TabsTrigger value="all">Tous les Produits</TabsTrigger>
+      {/* Products Tabs */}
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="flex flex-wrap mb-6">
+          <TabsTrigger value="all">Tous</TabsTrigger>
           {categories.map((category) => (
             <TabsTrigger key={category._id} value={category._id}>
               {category.name}
@@ -223,26 +216,22 @@ function ProductsContent() {
         </TabsList>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-            <h3 className="text-lg font-medium mb-2">Chargement des produits</h3>
-            <p className="text-muted-foreground max-w-md">
-              Veuillez patienter pendant que nous récupérons les produits...
-            </p>
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <AlertCircle className="h-12 w-12 text-destructive mb-4" />
-            <h3 className="text-lg font-medium mb-2">Erreur de chargement</h3>
-            <p className="text-muted-foreground max-w-md mb-6">{error}</p>
-            <Button onClick={() => window.location.reload()}>Réessayer</Button>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[...Array(8)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <div className="h-48 bg-muted rounded-t-lg"></div>
+                <CardContent className="p-4">
+                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : (
           <>
             <TabsContent value="all" className="mt-6">
               {products.length > 0 ? (
                 <>
-                  {/* First batch of products */}
                   <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
                     {products.slice(0, 8).map((product: any) => (
                       <ProductCard
@@ -269,11 +258,25 @@ function ProductsContent() {
                   <Package className="h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium mb-2">Aucun produit disponible</h3>
                   <p className="text-muted-foreground max-w-md mb-6">
-                    Soyez le premier à publier une annonce sur notre plateforme.
+                    {searchQuery ? `Aucun résultat pour "${searchQuery}"` : "Soyez le premier à publier une annonce sur notre plateforme."}
                   </p>
-                  <Button asChild>
-                    <Link href="/products/new">Publier une annonce</Link>
-                  </Button>
+                  <div className="flex justify-end mb-6">
+                    {isAuthenticated ? (
+                      <Button asChild>
+                        <Link href="/products/new">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Publier une annonce
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button asChild>
+                        <Link href="/login?redirectTo=/products/new">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Connexion pour publier
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
             </TabsContent>
