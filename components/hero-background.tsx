@@ -25,13 +25,7 @@ export default function HeroBackground() {
         transition={{ duration: 1.5, delay: 0.2 }}
         className="absolute top-[10%] left-[5%] opacity-15 z-0"
       >
-        <Image 
-          src="images/motorcycle-silhouette1.png"   
-          alt="" 
-          width={300} 
-          height={180} 
-          className="object-contain"
-        />
+
       </motion.div>
       
       <motion.div
@@ -40,13 +34,6 @@ export default function HeroBackground() {
         transition={{ duration: 1.5, delay: 0.5 }}
         className="absolute top-[50%] right-[5%] opacity-20 z-0"
       >
-        <Image 
-          src="images/motorcycle-silhouette2.png" 
-          alt="" 
-          width={350} 
-          height={200} 
-          className="object-contain"
-        />
       </motion.div>
       
       {/* Main background image */}

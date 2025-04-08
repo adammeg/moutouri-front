@@ -186,3 +186,27 @@ export const searchProductSuggestions = async (query: string) => {
     };
   }
 };
+
+// Add or update the searchProducts function
+export const searchProducts = async (query: any, filters = {}) => {
+  try {
+    console.log(`🔍 Searching for: "${query}" with filters:`, filters);
+    
+    const params = {
+      search: query,
+      ...filters
+    };
+    
+    const response = await axios.get(`${API_URL}/products/search`, { params });
+    
+    console.log(`🔍 Found ${response.data?.products?.length || 0} results for "${query}"`);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error in product search:", error);
+    return {
+      success: false,
+      message: "Search failed",
+      products: []
+    };
+  }
+};
