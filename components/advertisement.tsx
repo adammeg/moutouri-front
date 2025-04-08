@@ -26,7 +26,7 @@ export function Advertisement({
   position, 
   className = "", 
   fallbackText = "",
-  maxHeight = 250
+  maxHeight = 400
 }: AdvertisementProps) {
   const [ad, setAd] = useState<Ad | null>(null)
   const [loading, setLoading] = useState(true)
@@ -125,8 +125,8 @@ export function Advertisement({
         />
         
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex flex-col justify-end p-4">
-          <h3 className="text-white font-medium text-lg md:text-xl">{ad.title}</h3>
-          <p className="text-white/90 text-sm line-clamp-2 mt-1">{ad.description}</p>
+          <h3 className="text-white font-medium text-lg md:text-xl"></h3>
+          <p className="text-white/90 text-sm line-clamp-2 mt-1"></p>
           
           {ad.link && (
             <div className="flex items-center mt-2">

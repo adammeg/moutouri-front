@@ -92,7 +92,7 @@ export default function Home() {
               whileTap={{ scale: 0.95 }}
             >
               <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-lg">
-                <Link href="/register">Rejoindre la Communauté</Link>
+                <Link href="/products">Voir les produits en vente</Link>
               </Button>
             </motion.div>
           </div>
