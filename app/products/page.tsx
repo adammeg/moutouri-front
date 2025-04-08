@@ -216,11 +216,11 @@ function ProductsContent() {
         </TabsList>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
             {[...Array(8)].map((_, i) => (
               <Card key={i} className="animate-pulse">
-                <div className="h-48 bg-muted rounded-t-lg"></div>
-                <CardContent className="p-4">
+                <div className="aspect-square bg-muted rounded-t-lg"></div>
+                <CardContent className="p-3">
                   <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
                   <div className="h-3 bg-muted rounded w-1/2"></div>
                 </CardContent>
@@ -232,7 +232,7 @@ function ProductsContent() {
             <TabsContent value="all" className="mt-6">
               {products.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
                     {products.slice(0, 8).map((product: any) => (
                       <ProductCard
                         key={product._id}
@@ -244,7 +244,7 @@ function ProductsContent() {
                   {/* Middle advertisement */}
                   <Advertisement position="home-middle" className="my-8" />
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
                     {products.slice(8).map((product: any) => (
                       <ProductCard
                         key={product._id}
@@ -285,7 +285,7 @@ function ProductsContent() {
             {categories.map((category) => (
               <TabsContent key={category._id} value={category._id} className="mt-6">
                 {getProductsByCategory(category._id).length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
                     {getProductsByCategory(category._id).map((product: any) => (
                       <ProductCard
                         key={product._id}
