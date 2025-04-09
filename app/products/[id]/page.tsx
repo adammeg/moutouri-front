@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { getProductDetails } from "@/services/products"
 import { useToast } from "@/components/ui/use-toast"
@@ -55,6 +55,7 @@ export default function ProductDetailsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth()
   const [mounted, setMounted] = useState(false)
   const params = useParams()
+  const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -66,21 +67,16 @@ export default function ProductDetailsPage() {
 
   useEffect(() => {
     setMounted(true)
+    
+    // Fetch product details
     const fetchProductDetails = async () => {
       try {
         setLoading(true)
-        // Get the product ID from the URL params
         const productId = params?.id as string
         const response = await getProductDetails(productId)
-        if (product) {
-          console.log("Product seller data:", {
-            hasPublisher: !!product.publisher,
-            hasUser: !!product.user,
-            contactData: product.publisher || product.user
-          });
-        }
+        
         if (response.success) {
-          console.log("Product data:", response.product)
+          console.log("Product details loaded:", response.product._id)
           setProduct(response.product)
         } else {
           throw new Error(response.message || "Failed to fetch product")
@@ -98,8 +94,10 @@ export default function ProductDetailsPage() {
       }
     }
 
-    fetchProductDetails()
-  }, [params?.id, toast])
+    if (mounted && params?.id) {
+      fetchProductDetails()
+    }
+  }, [params?.id, toast, mounted])
 
   useEffect(() => {
     console.log("FULL PRODUCT DATA:", JSON.stringify(product, null, 2));
@@ -133,7 +131,7 @@ export default function ProductDetailsPage() {
   }, [product]);
 
   // Initial loading or not yet mounted
-  if (authLoading || !mounted) {
+  if (!mounted || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
@@ -141,57 +139,39 @@ export default function ProductDetailsPage() {
     )
   }
 
-  // Show loading state for product
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
-            <p>Chargement des détails du produit...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Show error state
-  if (error || !product) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-center min-h-[50vh]">
-          <div className="text-center">
-            <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Produit non trouvé</h2>
-            <p className="text-muted-foreground mb-6">
-              Ce produit n'existe pas ou a été supprimé.
-            </p>
-            <Button asChild>
-              <Link href="/products">Voir tous les produits</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const content = (
+  // The content to be rendered inside either layout
+  const pageContent = (
     <div className="container mx-auto px-4 py-8">
-      {product && (
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-10 w-10 text-primary animate-spin" />
+        </div>
+      ) : error || !product ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Produit non trouvé</h2>
+          <p className="text-muted-foreground max-w-md mb-6">
+            Ce produit n'existe pas ou a été supprimé.
+          </p>
+          <Button asChild>
+            <Link href="/products">Voir tous les produits</Link>
+          </Button>
+        </div>
+      ) : (
         <>
           {/* SEO metadata */}
           <SEO
             title={`${product.title} - ${product.price} DT | Moutouri`}
-            description={product.description.slice(0, 160)}
-            ogImage={product.images[0]}
+            description={product.description?.slice(0, 160) || "Détails du produit"}
+            ogImage={product.images?.[0]}
           />
           
-          {/* Structured data for SEO */}
+          {/* Product JSON-LD */}
           <ProductJsonLd 
             product={product} 
-            url={product._id ? `${process.env.NEXT_PUBLIC_SITE_URL}/products/${product._id}` : ''}
+            url={`${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/products/${product._id}`}
           />
-
+          
           {/* Breadcrumbs */}
           <div className="flex items-center text-sm mb-4">
             <Link href="/" className="text-muted-foreground hover:text-foreground">
@@ -483,19 +463,20 @@ export default function ProductDetailsPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-  
-  // For authenticated users, use the auth layout with sidebar
+  )
+
+  // Choose the appropriate layout based on authentication
   if (isAuthenticated) {
-    return <AuthLayout>{content}</AuthLayout>
+    // Use dashboard layout for authenticated users
+    return <AuthLayout>{pageContent}</AuthLayout>
   }
   
-  // For public/unauthenticated users, use a simpler layout
+  // Use simpler layout for guests
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">
-        {content}
+        {pageContent}
       </main>
     </div>
   )

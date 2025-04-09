@@ -18,7 +18,7 @@ export default function AuthLayout({
   redirectTo = '/login'
 }: AuthLayoutProps) {
   const [isMounted, setIsMounted] = useState(false)
-  const { isAuthenticated, isLoading, isAdmin } = useAuth()
+  const { isAuthenticated, isLoading, isAdmin, user } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -26,10 +26,15 @@ export default function AuthLayout({
     
     // Only redirect after client-side hydration
     if (isMounted && !isLoading) {
+      console.log("Auth check:", { isAuthenticated, isAdmin, adminOnly, user });
+      
       if (!isAuthenticated) {
-        router.push(`${redirectTo}?redirectTo=${encodeURIComponent(window.location.pathname)}`)
+        console.log("Redirecting to login from:", window.location.pathname);
+        const currentPath = encodeURIComponent(window.location.pathname);
+        router.push(`${redirectTo}?redirectTo=${currentPath}`);
       } else if (adminOnly && !isAdmin) {
-        router.push('/dashboard')
+        console.log("Not admin, redirecting to dashboard");
+        router.push('/dashboard');
       }
     }
   }, [isAuthenticated, isAdmin, isLoading, router, adminOnly, redirectTo, isMounted])

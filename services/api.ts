@@ -1,41 +1,37 @@
 import axios from 'axios';
 import { API_URL } from '@/config/config';
 
-// Create an instance with the baseURL
+// Create an axios instance
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 30000,
 });
 
-// Update the axios request interceptor to only add auth headers when needed
+// List of public endpoints that don't need authentication
+const publicEndpoints = [
+  '/products',
+  '/products/search',
+  '/products/suggestions', 
+  '/products/latest',
+  '/categories'
+];
+
+// Request interceptor
 api.interceptors.request.use(
-  (config) => {
-    // Skip auth for public endpoints
-    const publicEndpoints = [
-      '/products',
-      '/products/search',
-      '/products/suggestions',
-      '/products/latest',
-      '/categories'
-    ];
-    
-    // Check if the current URL path matches any public endpoint
+  async (config) => {
+    // Determine if this is a public endpoint (but exclude creating new products)
     const isPublicEndpoint = publicEndpoints.some(endpoint => 
-      config.url?.includes(endpoint) && !config.url.includes('/products/new')
+      config.url?.includes(endpoint) && 
+      !config.url.includes('/products/new') &&
+      config.method !== 'post'
     );
     
-    // Only add auth headers for protected endpoints
+    // Skip auth for public endpoints
     if (!isPublicEndpoint) {
-      const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      const accessToken = localStorage.getItem('accessToken');
       
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr);
-          if (user && user.token) {
-            config.headers.Authorization = `Bearer ${user.token}`;
-          }
-        } catch (error) {
-          console.error('Error parsing user data:', error);
-        }
+      if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
       }
     }
     
@@ -44,73 +40,60 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Add a response interceptor for handling token refresh
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Store the original request to retry it later
     const originalRequest = error.config;
     
-    console.log(`❌ API Error: ${error.response?.status} on ${originalRequest.url}`);
-    
-    // Only handle 401 errors (unauthorized) that haven't been retried
+    // Handle 401 Unauthorized errors (expired token)
     if (error.response?.status === 401 && !originalRequest._retry) {
-      console.log('🔄 Token expired, attempting to refresh');
       originalRequest._retry = true;
       
       try {
-        // Get refresh token
+        // Try to refresh the token
         const refreshToken = localStorage.getItem('refreshToken');
         
-        if (!refreshToken) {
-          console.log('❌ No refresh token available, redirecting to login');
-          // No refresh token, force logout
-          localStorage.removeItem('user');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
-          return Promise.reject(error);
+        if (refreshToken) {
+          const refreshResponse = await axios.post(`${API_URL}/auth/refresh-token`, { 
+            refreshToken 
+          });
+          
+          if (refreshResponse.data.success) {
+            // Save new tokens
+            localStorage.setItem('accessToken', refreshResponse.data.accessToken);
+            localStorage.setItem('refreshToken', refreshResponse.data.refreshToken);
+            
+            // Update auth header and retry
+            originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.accessToken}`;
+            return api(originalRequest);
+          }
         }
         
-        // Attempt to get a new token
-        console.log('📤 Sending refresh token request');
-        // We use axios directly here (not api instance) to avoid circular dependency
-        const refreshResponse = await axios.post(`${API_URL}/users/refresh-token`, { refreshToken });
-        
-        if (refreshResponse.data.success) {
-          console.log('✅ Token refresh successful');
-          
-          // Save the new tokens
-          localStorage.setItem('accessToken', refreshResponse.data.accessToken);
-          localStorage.setItem('refreshToken', refreshResponse.data.refreshToken);
-          
-          // Update the authorization header for the original request
-          originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.accessToken}`;
-          
-          // Retry the original request
-          return api(originalRequest);
-        } else {
-          console.log('❌ Refresh response unsuccessful');
-          throw new Error('Refresh token failed');
-        }
-      } catch (refreshError) {
-        console.error('🚨 Token refresh failed:', refreshError);
-        
-        // Clear auth data and redirect to login
+        // If refresh failed, clear auth and redirect to login
         localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         
-        // Give time for logging before redirect
-        setTimeout(() => {
+        // Redirect to login only if in browser
+        if (typeof window !== 'undefined') {
           window.location.href = '/login';
-        }, 100);
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
         
-        return Promise.reject(refreshError);
+        // Clear auth
+        localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        
+        // Redirect to login only if in browser
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
       }
     }
     
-    // Return any other errors
     return Promise.reject(error);
   }
 );

@@ -338,36 +338,24 @@ export default function ProductsPage() {
     )
   }
   
-  // For authenticated users, use the auth layout with sidebar
-  if (isAuthenticated) {
-    return (
-      <AuthLayout redirectTo="/login">
-        <div className="p-4 sm:p-6 md:p-8">
-          <Suspense fallback={
-            <div className="flex items-center justify-center h-96">
-              <Loader2 className="h-12 w-12 text-primary animate-spin" />
-            </div>
-          }>
-            <ProductsContent />
-          </Suspense>
-        </div>
-      </AuthLayout>
-    )
-  }
-  
-  // For public/unauthenticated users, use a simpler layout
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1">
-        <Suspense fallback={
-          <div className="flex items-center justify-center h-96">
-            <Loader2 className="h-12 w-12 text-primary animate-spin" />
-          </div>
-        }>
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+      </div>
+    }>
+      {isAuthenticated ? (
+        <AuthLayout>
           <ProductsContent />
-        </Suspense>
-      </main>
-    </div>
+        </AuthLayout>
+      ) : (
+        <div className="min-h-screen flex flex-col">
+          <Navbar />
+          <main className="flex-1">
+            <ProductsContent />
+          </main>
+        </div>
+      )}
+    </Suspense>
   )
 }

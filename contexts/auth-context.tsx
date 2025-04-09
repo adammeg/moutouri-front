@@ -311,6 +311,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   }
 
+  const refreshTokenIfNeeded = async () => {
+    const accessToken = localStorage.getItem('accessToken');
+    const refreshToken = localStorage.getItem('refreshToken');
+    
+    if (!accessToken || !refreshToken) return false;
+    
+    // Check if token is expired or about to expire (within 5 mins)
+    const tokenData = parseJwt(accessToken);
+    const currentTime = Math.floor(Date.now() / 1000);
+    
+    if (tokenData && tokenData.exp && tokenData.exp - currentTime < 300) {
+      console.log("Token expired or expiring soon, refreshing...");
+      try {
+        const response = await axios.post(`${API_URL}/auth/refresh-token`, { refreshToken });
+        
+        if (response.data.success) {
+          // Update tokens in storage
+          localStorage.setItem('accessToken', response.data.accessToken);
+          localStorage.setItem('refreshToken', response.data.refreshToken);
+          return true;
+        }
+      } catch (error) {
+        console.error("Token refresh failed:", error);
+        // On refresh failure, force logout
+        logout();
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  // Helper to parse JWT
+  const parseJwt = (token: string) => {
+    try {
+      return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+      return null;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{

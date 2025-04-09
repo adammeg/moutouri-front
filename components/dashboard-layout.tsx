@@ -84,6 +84,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               width={40}
               height={40}
               className="rounded-md"
+              onError={(e) => {
+                console.error("Error loading sidebar logo");
+                const target = e.target as HTMLImageElement;
+                target.src = "/placeholder.svg";
+              }}
             />
             <span className="text-xl font-bold">Moutouri</span>
           </Link>
@@ -107,6 +112,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       alt={`${user.firstName} ${user.lastName}`}
                       fill
                       className="object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
                     />
                   ) : (
                     <span className="text-xl font-semibold text-muted-foreground">
@@ -141,7 +150,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  pathname === item.href
+                  pathname === item.href || 
+                  (item.href === "/dashboard" && pathname?.startsWith("/dashboard/")) ||
+                  (item.href === "/profile" && pathname?.startsWith("/profile/"))
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                 )}
@@ -160,7 +171,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     href={item.href}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                      pathname === item.href
+                      pathname === item.href || pathname?.startsWith(`${item.href}/`)
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                     )}
