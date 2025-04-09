@@ -22,7 +22,7 @@ function LoginForm() {
   const { toast } = useToast()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams?.get("redirectTo") || "/dashboard"
+  const redirectTo = searchParams?.get("redirectTo") || "/products"
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

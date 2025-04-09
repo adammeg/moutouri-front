@@ -733,11 +733,6 @@ export default function ProductDetailsPage() {
                 <Facebook className="h-4 w-4 text-blue-600" />
                 Facebook
               </Button>
-
-
-
-
-
               <Button
                 variant="outline"
                 className="flex justify-start items-center gap-2"

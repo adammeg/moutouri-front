@@ -27,10 +27,20 @@ export const getProductsByCategory = async (categoryId: string) => {
 
 // Get user's products
 export const getUserProducts = async (userId: string) => {
-  console.log("Fetching products for user:", userId);
-  const response = await axios.get(`${API_URL}/users/${userId}/products`);
-  console.log("User products response:", response.data);
-  return response.data;
+  try {
+    console.log(`Fetching products for user: ${userId}`);
+    const response = await axios.get(`${API_URL}/users/${userId}/products`);
+    console.log("User products response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user products:', error);
+    return { 
+      success: false, 
+      message: axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : 'Failed to fetch your products'
+    };
+  }
 };
 
 // Get product details
