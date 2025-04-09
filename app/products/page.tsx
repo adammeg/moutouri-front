@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/auth-context"
 
 // Components that use search params need to be separated
 function ProductsContent() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [products, setProducts] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -33,8 +34,6 @@ function ProductsContent() {
   const { toast } = useToast()
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { isAuthenticated } = useAuth()
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -184,22 +183,22 @@ function ProductsContent() {
 
       {/* "Publish Ad" button for authenticated users, "Login to publish" for guests */}
       <div className="flex justify-end mb-6">
-        {isAuthenticated ? (
-          <Button asChild>
-            <Link href="/products/new">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Publier une annonce
-            </Link>
-          </Button>
-        ) : (
-          <Button asChild>
-            <Link href="/login?redirectTo=/products/new">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Connexion pour publier
-            </Link>
-          </Button>
-        )}
-      </div>
+  {!authLoading && (isAuthenticated ? (
+    <Button asChild>
+      <Link href="/products/new">
+        <PlusCircle className="mr-2 h-4 w-4" />
+        Publier une annonce
+      </Link>
+    </Button>
+  ) : (
+    <Button asChild>
+      <Link href="/login?redirectTo=/products/new">
+        <PlusCircle className="mr-2 h-4 w-4" />
+        Connexion pour publier
+      </Link>
+    </Button>
+  ))}
+</div>
 
       {/* Advertisement */}
       <Advertisement position="home-top" className="mb-8" />

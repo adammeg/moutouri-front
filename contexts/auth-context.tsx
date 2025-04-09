@@ -115,67 +115,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [token, setToken] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  // Initialize authentication state from localStorage
   useEffect(() => {
-    const initializeAuth = () => {
+    // Safe check for token in a way that works on both client and server
+    const checkAuth = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true)
+        // Check for token in localStorage (client-side only)
+        const storedToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+        const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
         
-        // Get user from localStorage
-        const userStr = localStorage.getItem('user')
-        console.log('🔍 Checking stored user:', userStr ? 'Found' : 'Not found')
-        
-        if (userStr) {
-          // Parse the user data
-          const userData = JSON.parse(userStr)
-          
-          // Extract token from user data or separate storage
-          const accessToken = localStorage.getItem('accessToken')
-          const refreshToken = localStorage.getItem('refreshToken')
-          const token = userData.token || accessToken
-          
-          console.log('🔑 Token found:', token ? 'Yes' : 'No')
-          console.log('📋 User data keys:', Object.keys(userData))
-          
-          // Create a properly structured user object
-          const normalizedUser: User = {
-            _id: userData.id || userData._id,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            email: userData.email,
-            role: userData.role,
-            token: token || undefined,
-            accessToken: accessToken || undefined,
-            image: userData.image,
-            isAdmin: userData.role === 'admin'
-          }
-          console.log('✅ User ID:', normalizedUser._id)
-          
-          // Set auth state
-          setUser(normalizedUser)
-          setIsAdmin(normalizedUser.role === 'admin')
-          setToken(token)
-          
-          // Set axios auth header if token exists
-          if (token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-          }
-        } else {
-          setUser(null)
-          setIsAdmin(false)
+        if (!storedToken || !storedUser) {
+          // No stored credentials, consider user not authenticated
+          setUser(null);
+          setIsAuthenticated(false);
+          setIsAdmin(false);
+          return;
         }
-      } catch (error) {
-        console.error('Error initializing auth state:', error)
-        setUser(null)
-        setIsAdmin(false)
+        
+        // Token exists, try to parse user
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+          setIsAuthenticated(true);
+          setIsAdmin(userData.role === 'admin');
+        } catch (error) {
+          console.error('Failed to parse stored user data:', error);
+          
+          // Invalid user data, clear storage
+          localStorage.removeItem('user');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          
+          setUser(null);
+          setIsAuthenticated(false);
+          setIsAdmin(false);
+        }
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
     
-    initializeAuth()
-  }, [])
+    checkAuth();
+  }, []);
 
   // Login handler
   const login = async (email: string, password: string) => {
@@ -332,7 +315,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
+        isAuthenticated,
         isLoading,
         isAdmin,
         login,

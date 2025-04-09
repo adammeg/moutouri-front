@@ -6,20 +6,36 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
-// Add request interceptor for auth token
+// Update the axios request interceptor to only add auth headers when needed
 api.interceptors.request.use(
   (config) => {
-    // Get token from localStorage
-    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    // Skip auth for public endpoints
+    const publicEndpoints = [
+      '/products',
+      '/products/search',
+      '/products/suggestions',
+      '/products/latest',
+      '/categories'
+    ];
     
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        if (user && user.token) {
-          config.headers.Authorization = `Bearer ${user.token}`;
+    // Check if the current URL path matches any public endpoint
+    const isPublicEndpoint = publicEndpoints.some(endpoint => 
+      config.url?.includes(endpoint) && !config.url.includes('/products/new')
+    );
+    
+    // Only add auth headers for protected endpoints
+    if (!isPublicEndpoint) {
+      const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user && user.token) {
+            config.headers.Authorization = `Bearer ${user.token}`;
+          }
+        } catch (error) {
+          console.error('Error parsing user data:', error);
         }
-      } catch (error) {
-        console.error('Error parsing user data:', error);
       }
     }
     

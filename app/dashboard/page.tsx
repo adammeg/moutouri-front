@@ -43,6 +43,7 @@ export default function DashboardPage() {
 }
 
 function DashboardContent() {
+  const { isLoading: authLoading, isAuthenticated } = useAuth();
   const [products, setProducts] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -52,38 +53,53 @@ function DashboardContent() {
   const router = useRouter()
   const { user } = useAuth()
 
-  useEffect(() => {
-    const fetchUserProducts = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-        
-        if (!user?._id) {
-          throw new Error("Utilisateur non trouvé")
-        }
-        
-        const response = await getUserProducts(user._id)
-        
-        if (response.success) {
-          setProducts(response.products || [])
-        } else {
-          throw new Error(response.message || "Erreur lors de la récupération des produits")
-        }
-      } catch (error: any) {
-        console.error("Error fetching user products:", error)
-        setError(error.message || "Une erreur s'est produite")
-        toast({
-          title: "Erreur",
-          description: error.message || "Impossible de charger vos produits",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
+// At the beginning of DashboardContent component
+
+useEffect(() => {
+  // Only fetch user products if user is authenticated and user ID is available
+  if (isAuthenticated && user?._id) {
+    fetchUserProducts();
+  }
+}, [isAuthenticated, user]);
+
+const fetchUserProducts = async () => {
+  try {
+    setIsLoading(true);
+    setError(null);
+    
+    if (!user?._id) {
+      throw new Error("User information not available");
     }
     
-    fetchUserProducts()
-  }, [user, toast])
+    const response = await getUserProducts(user._id);
+    
+    if (response.success) {
+      setProducts(response.products || []);
+    } else {
+      throw new Error(response.message || "Error fetching products");
+    }
+  } catch (error: any) {
+    console.error("Error fetching user products:", error);
+    setError(error.message || "An error occurred");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Show loading state if auth is still loading
+if (authLoading) {
+  return (
+    <div className="flex justify-center items-center min-h-screen">
+      <Loader2 className="h-8 w-8 text-primary animate-spin" />
+    </div>
+  );
+}
+
+// Redirect if not authenticated
+if (!isAuthenticated && !authLoading) {
+  router.push('/login?redirectTo=/dashboard');
+  return null;
+}
   
   const handleDelete = async (productId: string) => {
     try {
