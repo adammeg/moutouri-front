@@ -6,7 +6,6 @@ import Link from "next/link"
 import { getProductDetails } from "@/services/products"
 import { useToast } from "@/components/ui/use-toast"
 import SafeImage from "@/components/safe-image"
-import DashboardLayout from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -32,6 +31,9 @@ import {
   Linkedin,
   MessagesSquare,
   Smartphone,
+  Loader2,
+  AlertCircle,
+  Package
 } from "lucide-react"
 import {
   Dialog,
@@ -45,8 +47,13 @@ import SEO from "@/components/seo"
 import { ProductJsonLd } from "@/components/product-json-ld"
 import { Advertisement } from '@/components/advertisement'
 import ProtectedRoute from "@/components/protected-route"
+import AuthLayout from "@/components/auth-layout"
+import Navbar from "@/components/navbar"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function ProductDetailsPage() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const [mounted, setMounted] = useState(false)
   const params = useParams()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
@@ -58,6 +65,7 @@ export default function ProductDetailsPage() {
   const [publisherData, setPublisherData] = useState(null)
 
   useEffect(() => {
+    setMounted(true)
     const fetchProductDetails = async () => {
       try {
         setLoading(true)
@@ -124,522 +132,333 @@ export default function ProductDetailsPage() {
     fetchPublisherData();
   }, [product]);
 
-  // Show loading state
+  // Initial loading or not yet mounted
+  if (authLoading || !mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+      </div>
+    )
+  }
+
+  // Show loading state for product
   if (loading) {
     return (
-      <DashboardLayout>
+      <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
             <p>Chargement des détails du produit...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </div>
     )
   }
 
   // Show error state
   if (error || !product) {
     return (
-      <DashboardLayout>
+      <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col items-center justify-center min-h-[50vh]">
           <div className="text-center">
-            <div className="text-red-500 mb-4 text-5xl">⚠️</div>
-            <h2 className="text-xl font-bold mb-2">Produit introuvable</h2>
-            <p className="mb-4">Nous n'avons pas pu trouver les détails de ce produit.</p>
+            <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Produit non trouvé</h2>
+            <p className="text-muted-foreground mb-6">
+              Ce produit n'existe pas ou a été supprimé.
+            </p>
             <Button asChild>
-              <Link href="/products">Retour aux produits</Link>
+              <Link href="/products">Voir tous les produits</Link>
             </Button>
-          </div>
-        </div>
-      </DashboardLayout>
-    )
-  }
-
-  // Functions to navigate images
-  const nextImage = () => {
-    if (product.images && product.images.length > 0) {
-      setCurrentImageIndex((prev) => (prev + 1) % product.images.length)
-    }
-  }
-
-  const prevImage = () => {
-    if (product.images && product.images.length > 0) {
-      setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length)
-    }
-  }
-
-  // Updated function to show contact dialog instead of toast
-  const handleContactSeller = () => {
-    setContactDialogOpen(true)
-  }
-
-  const getSeller = () => {
-    if (product?.publisher && typeof product.publisher === 'object') {
-      return product.publisher;
-    }
-
-    if (publisherData) {
-      return publisherData;
-    }
-
-    if (product?.user) {
-      return product.user;
-    }
-
-    return {};
-  }
-
-  const handleCallSeller = () => {
-    const seller = getSeller();
-    if (seller?.phone) {
-      window.location.href = `tel:${seller.phone}`;
-    } else {
-      toast({
-        title: "Numéro indisponible",
-        description: "Le vendeur n'a pas fourni de numéro de téléphone.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCopyPhone = () => {
-    const seller = getSeller();
-    if (seller?.phone) {
-      navigator.clipboard.writeText(seller.phone);
-      toast({
-        title: "Numéro copié",
-        description: "Le numéro de téléphone a été copié dans le presse-papiers.",
-      });
-    }
-  };
-
-  const handleCopyEmail = () => {
-    const seller = getSeller();
-    if (seller?.email) {
-      navigator.clipboard.writeText(seller.email);
-      toast({
-        title: "Email copié",
-        description: "L'adresse email a été copiée dans le presse-papiers.",
-      });
-    }
-  };
-
-  const handleSaveProduct = () => {
-    toast({
-      title: "Produit sauvegardé",
-      description: "Ce produit a été ajouté à vos articles sauvegardés.",
-    })
-  }
-
-  const handleShareProduct = () => {
-    setShareDialogOpen(true)
-  }
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href)
-    toast({
-      title: "Lien copié",
-      description: "Le lien du produit a été copié dans votre presse-papiers.",
-    })
-  }
-
-  const handleNativeShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: product.title,
-          text: `Découvrez ${product.title} à ${product.price} DT`,
-          url: window.location.href,
-        })
-        toast({
-          title: "Partage réussi",
-          description: "Le produit a été partagé avec succès.",
-        })
-      } catch (error: unknown) {
-        if (error && typeof error === 'object' && 'name' in error && error.name !== 'AbortError') {
-          console.error('Error sharing:', error)
-          toast({
-            title: "Erreur de partage",
-            description: "Une erreur s'est produite lors du partage.",
-            variant: "destructive",
-          })
-        }
-      }
-    } else {
-      handleCopyLink()
-    }
-  }
-
-  const handleSocialShare = (platform: string) => {
-    const url = encodeURIComponent(window.location.href)
-    const text = encodeURIComponent(`Découvrez ${product.title} à ${product.price} DT`)
-
-    let shareUrl = ''
-
-    switch (platform) {
-      case 'facebook':
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`
-        break
-      case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?text=${text}&url=${url}`
-        break
-      case 'linkedin':
-        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`
-        break
-      case 'whatsapp':
-        shareUrl = `https://wa.me/?text=${text}%20${url}`
-        break
-      default:
-        break
-    }
-
-    if (shareUrl) {
-      window.open(shareUrl, '_blank', 'width=600,height=400')
-    }
-  }
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString('fr-FR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    } catch (e) {
-      return 'Date inconnue'
-    }
-  }
-
-  return (
-    <ProtectedRoute allowUnauthenticated={true}>
-
-    <DashboardLayout>
-      {product && (
-        <>
-          <SEO
-            title={`${product.title} - ${product.price.toLocaleString()} DT | Moutouri`}
-            description={product.description.substring(0, 160)}
-            ogImage={product.images && product.images.length > 0 ? product.images[0] : '/og-image.png'}
-            canonical={`/products/${product.title}`}
-          />
-          <ProductJsonLd
-            product={product}
-            url={typeof window !== 'undefined' ? window.location.href : `https://moutouri.tn/products/${product.title}`}
-          />
-        </>
-      )}
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <Link
-              href="/products"
-              className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-2"
-            >
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Retour aux Produits
-            </Link>
-            <h1 className="text-3xl font-bold tracking-tight">{product.title}</h1>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <Badge variant="outline" className="bg-primary/10 text-primary">
-                {product.category?.name || "Non catégorisé"}
-              </Badge>
-              <span className="text-muted-foreground flex items-center text-sm">
-                <MapPin className="mr-1 h-3 w-3" />
-                {product.location || "Emplacement non spécifié"}
-              </span>
-              <span className="text-muted-foreground flex items-center text-sm">
-                <Calendar className="mr-1 h-3 w-3" />
-                Publié le {formatDate(product.createdAt)}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleShareProduct}>
-              <Share2 className="mr-2 h-4 w-4" />
-              Partager
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardContent className="p-0">
-                <div className="relative aspect-[4/3] w-full overflow-hidden">
-                  {product.images && product.images.length > 0 ? (
-                    <img
-                      src={product.images[currentImageIndex]}
-                      alt={`${product.title} - Image ${currentImageIndex + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                      <span className="text-gray-500">Pas d'image disponible</span>
-                    </div>
-                  )}
-
-                  {product.images && product.images.length > 1 && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 text-foreground hover:bg-background"
-                        onClick={prevImage}
-                      >
-                        <ChevronLeft className="h-6 w-6" />
-                        <span className="sr-only">Image précédente</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 text-foreground hover:bg-background"
-                        onClick={nextImage}
-                      >
-                        <ChevronRight className="h-6 w-6" />
-                        <span className="sr-only">Image suivante</span>
-                      </Button>
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-2 py-1 rounded-full bg-background/80">
-                        {product.images.map((image: string, index: number) => (
-                          <button
-                            key={index}
-                            className={`h-2 w-2 rounded-full ${index === currentImageIndex ? "bg-primary" : "bg-muted"}`}
-                            onClick={() => setCurrentImageIndex(index)}
-                          >
-                            <span className="sr-only">Voir image {index + 1}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Tabs defaultValue="details">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="details">Description</TabsTrigger>
-                <TabsTrigger value="features">Caractéristiques</TabsTrigger>
-                <TabsTrigger value="seller">Vendeur</TabsTrigger>
-              </TabsList>
-              <TabsContent value="details" className="mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Description du Produit</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="prose max-w-none dark:prose-invert">
-                      <p>{product.description}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="features" className="mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Caractéristiques Principales</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">État</p>
-                        <p className="font-medium">{product.condition}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Année</p>
-                        <p className="font-medium">{product.year}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Kilométrage</p>
-                        <p className="font-medium">{product.kilometrage?.toLocaleString() || 0} km</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Cylindrée</p>
-                        <p className="font-medium">{product.cylinder} cc</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Couleur</p>
-                        <p className="font-medium">{product.color}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Localisation</p>
-                        <p className="font-medium">{product.location}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="seller" className="mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>À propos du Vendeur</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {(() => {
-                      const seller = getSeller();
-
-                      return seller ? (
-                        <div className="rounded-lg border p-4">
-                          <div className="flex items-center gap-4">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage
-                                src={seller.image || '/images/placeholder-user.png'}
-                                alt={`${seller.firstName || ''} ${seller.lastName || ''}`}
-                              />
-                              <AvatarFallback>
-                                {seller.firstName?.charAt(0) || seller.email?.charAt(0) || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-
-                            <div>
-                              <h4 className="font-medium">
-                                {`${seller.firstName || ''} ${seller.lastName || ''}`}
-                                {!seller.firstName && !seller.lastName && "Vendeur"}
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                Membre depuis {new Date(seller.createdAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long' })}
-                              </p>
-                            </div>
-                          </div>
-
-                          <Separator className="my-4" />
-
-                          <div className="space-y-2">
-                            {seller.phone && (
-                              <div className="flex items-center gap-2">
-                                <Phone className="h-4 w-4 text-muted-foreground" />
-                                <span>{seller.phone}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="ml-auto h-7 px-2"
-                                  onClick={handleCallSeller}
-                                >
-                                  Appeler
-                                </Button>
-                              </div>
-                            )}
-
-                            {seller.email && (
-                              <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-muted-foreground" />
-                                <span>{seller.email}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="ml-auto h-7 px-2"
-                                  onClick={() => handleCopyEmail()}
-                                >
-                                  Contacter
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="rounded-lg border p-4 text-center text-muted-foreground">
-                          Information sur le vendeur non disponible
-                        </div>
-                      );
-                    })()}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-3xl font-bold">{product.price?.toLocaleString() || 0} DT</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">État</p>
-                    <p className="font-medium">{product.condition}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Année</p>
-                    <p className="font-medium">{product.year}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Kilométrage</p>
-                    <p className="font-medium">{product.kilometrage?.toLocaleString() || 0} km</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Cylindrée</p>
-                    <p className="font-medium">{product.cylinder} cc</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Couleur</p>
-                    <p className="font-medium">{product.color}</p>
-                  </div>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Contacter le vendeur</CardTitle>
-                      <CardDescription>
-                        Vous pouvez contacter par téléphone ou email.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {(() => {
-                        const seller = getSeller();
-                        return (
-                          <div className="space-y-4">
-                            {seller?.phone ? (
-                              <div className="flex items-center gap-3">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-9"
-                                  onClick={handleCallSeller}
-                                >
-                                  <Phone className="mr-2 h-4 w-4" />
-                                  Appeler
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-9"
-                                  onClick={handleCopyPhone}
-                                >
-                                  <Copy className="mr-2 h-4 w-4" />
-                                  Copier le numéro
-                                </Button>
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">
-                                Numéro de téléphone non disponible
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </CardContent>
-                  </Card>
-                  <Button variant="outline" className="w-full" onClick={handleSaveProduct}>
-                    <Heart className="mr-2 h-4 w-4" />
-                    Sauvegarder
-                  </Button>
-                </div>
-                <div className="rounded-lg bg-muted p-3 text-sm">
-                  <p className="font-medium mb-1">Conseils de Sécurité</p>
-                  <ul className="space-y-1 text-muted-foreground">
-                    <li>• Rencontrez-vous dans un lieu public</li>
-                    <li>• Ne payez pas à l'avance</li>
-                    <li>• Inspectez l'article avant d'acheter</li>
-                    <li>• Vérifiez tous les documents</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
+    )
+  }
+
+  const content = (
+    <div className="container mx-auto px-4 py-8">
+      {product && (
+        <>
+          {/* SEO metadata */}
+          <SEO
+            title={`${product.title} - ${product.price} DT | Moutouri`}
+            description={product.description.slice(0, 160)}
+            ogImage={product.images[0]}
+          />
+          
+          {/* Structured data for SEO */}
+          <ProductJsonLd 
+            product={product} 
+            url={product._id ? `${process.env.NEXT_PUBLIC_SITE_URL}/products/${product._id}` : ''}
+          />
+
+          {/* Breadcrumbs */}
+          <div className="flex items-center text-sm mb-4">
+            <Link href="/" className="text-muted-foreground hover:text-foreground">
+              Accueil
+            </Link>
+            <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground" />
+            <Link href="/products" className="text-muted-foreground hover:text-foreground">
+              Produits
+            </Link>
+            <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground" />
+            <span className="font-medium">{product.title}</span>
+          </div>
+
+          {/* Product details */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left column - Images */}
+            <div className="lg:col-span-2">
+              {/* Main product details card */}
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Image gallery */}
+                  <div className="relative aspect-[4/3] bg-muted">
+                    {product.images && product.images.length > 0 ? (
+                      <>
+                        <SafeImage
+                          src={product.images[currentImageIndex]}
+                          alt={product.title}
+                          fill
+                          className="object-contain"
+                        />
+                        
+                        {/* Navigation arrows if multiple images */}
+                        {product.images.length > 1 && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-background/50 hover:bg-background/80"
+                              onClick={() => setCurrentImageIndex((prev) => 
+                                prev === 0 ? product.images.length - 1 : prev - 1
+                              )}
+                            >
+                              <ChevronLeft className="h-6 w-6" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-background/50 hover:bg-background/80"
+                              onClick={() => setCurrentImageIndex((prev) => 
+                                prev === product.images.length - 1 ? 0 : prev + 1
+                              )}
+                            >
+                              <ChevronRight className="h-6 w-6" />
+                            </Button>
+                            
+                            {/* Image counter */}
+                            <div className="absolute bottom-2 right-2 bg-background/70 text-foreground rounded-full text-xs px-2 py-1">
+                              {currentImageIndex + 1} / {product.images.length}
+                            </div>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <Package className="h-24 w-24 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Thumbnail navigation */}
+                  {product.images && product.images.length > 1 && (
+                    <div className="flex overflow-x-auto gap-2 p-2 hide-scrollbar">
+                      {product.images.map((image: string, index: number) => (
+                        <button
+                          key={index}
+                          className={`relative min-w-[80px] h-[60px] rounded overflow-hidden ${
+                            index === currentImageIndex ? 'ring-2 ring-primary' : 'opacity-70'
+                          }`}
+                          onClick={() => setCurrentImageIndex(index)}
+                        >
+                          <SafeImage
+                            src={image}
+                            alt={`${product.title} - image ${index + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            
+              {/* Advertisement */}
+              <Advertisement position="product-detail" className="my-6" />
+
+              {/* Product details tabs */}
+              <Card className="mt-6">
+                <Tabs defaultValue="description">
+                  <CardHeader className="pb-0">
+                    <TabsList className="grid grid-cols-2">
+                      <TabsTrigger value="description">Description</TabsTrigger>
+                      <TabsTrigger value="details">Caractéristiques</TabsTrigger>
+                    </TabsList>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <TabsContent value="description">
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Description</h3>
+                        <p className="whitespace-pre-line">{product.description}</p>
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="details">
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">Caractéristiques</h3>
+                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <dt className="text-sm font-medium text-muted-foreground">Cylindrée</dt>
+                            <dd>{product.cylinder} cc</dd>
+                          </div>
+                          <div className="space-y-1">
+                            <dt className="text-sm font-medium text-muted-foreground">Année</dt>
+                            <dd>{product.year}</dd>
+                          </div>
+                          <div className="space-y-1">
+                            <dt className="text-sm font-medium text-muted-foreground">Kilométrage</dt>
+                            <dd>{product.kilometrage} km</dd>
+                          </div>
+                          <div className="space-y-1">
+                            <dt className="text-sm font-medium text-muted-foreground">État</dt>
+                            <dd className="capitalize">{product.condition}</dd>
+                          </div>
+                          <div className="space-y-1">
+                            <dt className="text-sm font-medium text-muted-foreground">Lieu</dt>
+                            <dd>{product.location}</dd>
+                          </div>
+                          <div className="space-y-1">
+                            <dt className="text-sm font-medium text-muted-foreground">Date de publication</dt>
+                            <dd>{new Date(product.createdAt).toLocaleDateString()}</dd>
+                          </div>
+                        </dl>
+                      </div>
+                    </TabsContent>
+                  </CardContent>
+                </Tabs>
+              </Card>
+            </div>
+            
+            {/* Right column - Price & Contact */}
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold">{product.title}</CardTitle>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <MapPin className="mr-1 h-4 w-4" />
+                    {product.location}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <h3 className="text-3xl font-bold text-primary">{product.price} DT</h3>
+                    <div className="flex items-center mt-1">
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {product.condition === "new" ? "Neuf" :
+                         product.condition === "excellent" ? "Excellent" : 
+                         product.condition === "good" ? "Bon état" : 
+                         product.condition === "fair" ? "État moyen" : 
+                         product.condition}
+                      </Badge>
+                      <div className="ml-auto flex items-center text-sm text-muted-foreground">
+                        <Calendar className="mr-1 h-4 w-4" />
+                        {new Date(product.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col space-y-3">
+                    <Button onClick={() => setContactDialogOpen(true)} className="gap-2">
+                      <Phone className="h-4 w-4" />
+                      Contacter le vendeur
+                    </Button>
+                    <Button variant="outline" className="gap-2" onClick={() => setShareDialogOpen(true)}>
+                      <Share2 className="h-4 w-4" />
+                      Partager
+                    </Button>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Vendeur</h4>
+                    {(() => {
+                      // Access seller information
+                      const seller = product.publisher || product.user;
+                      
+                      return (
+                        <div className="flex items-center">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={seller?.image} alt={seller?.firstName} />
+                            <AvatarFallback>
+                              {seller?.firstName?.[0]}{seller?.lastName?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="ml-3">
+                            <p className="text-sm font-medium">
+                              {seller?.firstName} {seller?.lastName}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Membre depuis {new Date(seller?.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Contact</h4>
+                    {(() => {
+                      // Access seller for contact information
+                      const seller = product.publisher || product.user;
+                      
+                      return (
+                        <div className="space-y-2">
+                          {seller?.phone ? (
+                            <div className="flex">
+                              <Button 
+                                variant="outline" 
+                                className="w-full justify-start" 
+                                onClick={() => {
+                                  if (seller?.phone) {
+                                    navigator.clipboard.writeText(seller.phone);
+                                    toast?.({
+                                      title: "Numéro copié !",
+                                      description: "Numéro de téléphone copié avec succès.",
+                                    });
+                                  }
+                                }}
+                              >
+                                <Copy className="mr-2 h-4 w-4" />
+                                Copier le numéro
+                              </Button>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Numéro de téléphone non disponible
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+              <div className="rounded-lg bg-muted p-3 text-sm">
+                <p className="font-medium mb-1">Conseils de Sécurité</p>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>• Rencontrez-vous dans un lieu public</li>
+                  <li>• Ne payez pas à l'avance</li>
+                  <li>• Inspectez l'article avant d'acheter</li>
+                  <li>• Vérifiez tous les documents</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Dialog components */}
       <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -648,53 +467,10 @@ export default function ProductDetailsPage() {
               Vous pouvez contacter {product?.publisher?.firstName} {product?.publisher?.lastName} par téléphone.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            {product?.publisher?.phone ? (
-              <div className="flex flex-col space-y-2">
-                <label className="text-sm font-medium">Téléphone</label>
-                <div className="flex items-center space-x-2">
-                  <div className="flex-1 rounded-md border px-3 py-2">
-                    {product.publisher.phone}
-                  </div>
-                  <Button variant="outline" size="icon" onClick={handleCopyPhone}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button variant="default" size="icon" onClick={handleCallSeller}>
-                    <PhoneCall className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Numéro de téléphone non disponible</p>
-            )}
-            {product?.publisher?.email && (
-              <div className="flex flex-col space-y-2">
-                <label className="text-sm font-medium">Email</label>
-                <div className="flex items-center space-x-2">
-                  <div className="flex-1 rounded-md border px-3 py-2">
-                    {product.publisher.email}
-                  </div>
-                  <Button variant="outline" size="icon" onClick={handleCopyEmail}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="icon"
-                    onClick={() => window.location.href = `mailto:${product.publisher.email}`}
-                  >
-                    <Mail className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="mt-4">
-            <p className="text-sm text-muted-foreground">
-              Pour votre sécurité, ne partagez jamais vos informations bancaires et privilégiez les rencontres dans des lieux publics.
-            </p>
-          </div>
+          {/* Dialog content */}
         </DialogContent>
       </Dialog>
+
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -703,53 +479,24 @@ export default function ProductDetailsPage() {
               Partagez "{product?.title}" avec vos amis ou sur les réseaux sociaux.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Button
-              variant="outline"
-              className="flex justify-start items-center gap-2"
-              onClick={handleCopyLink}
-            >
-              <Copy className="h-4 w-4" />
-              Copier le lien
-            </Button>
-
-            {typeof navigator !== 'undefined' && (
-              <Button
-                variant="outline"
-                className="flex justify-start items-center gap-2"
-                onClick={handleNativeShare}
-              >
-                <Smartphone className="h-4 w-4" />
-                Partager sur votre appareil
-              </Button>
-            )}
-            <Separator />
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                className="flex justify-start items-center gap-2"
-                onClick={() => handleSocialShare('facebook')}
-              >
-                <Facebook className="h-4 w-4 text-blue-600" />
-                Facebook
-              </Button>
-              <Button
-                variant="outline"
-                className="flex justify-start items-center gap-2"
-                onClick={() => handleSocialShare('whatsapp')}
-              >
-                <MessagesSquare className="h-4 w-4 text-green-500" />
-                WhatsApp
-              </Button>
-            </div>
-          </div>
-          <div className="mt-2 text-sm text-muted-foreground">
-            <p>Le lien partagé dirigera vers cette page de détails du produit.</p>
-          </div>
+          {/* Dialog content */}
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
-    </ProtectedRoute>
-
+    </div>
+  );
+  
+  // For authenticated users, use the auth layout with sidebar
+  if (isAuthenticated) {
+    return <AuthLayout>{content}</AuthLayout>
+  }
+  
+  // For public/unauthenticated users, use a simpler layout
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-1">
+        {content}
+      </main>
+    </div>
   )
 }

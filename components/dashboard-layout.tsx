@@ -1,40 +1,27 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  Menu,
+  X,
   Home,
-  LogOut,
-  MessageSquare,
-  BikeIcon as Motorcycle,
   Package,
-  Settings,
-  ShieldCheck,
   User,
-  Plus,
-  ShoppingBag,
+  Settings,
+  LogOut,
+  PlusCircle,
   Heart,
-  ShieldAlert,
-  Tag,
+  ShoppingBag,
+  Bell,
+  MessageSquare,
+  ShieldCheck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ModeToggle } from "@/components/mode-toggle"
+import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/contexts/auth-context"
+import { cn } from "@/lib/utils"
 import Image from "next/image"
 
 interface DashboardLayoutProps {
@@ -42,93 +29,213 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
-  const { user, logout, isAdmin } = useAuth()
+  const { user, logout, isAuthenticated, isAdmin } = useAuth()
+  const [isMounted, setIsMounted] = useState(false)
 
-  const navigation = [
-    { name: "Tableau de Bord", href: "/dashboard", icon: Home },
-    { name: "Produits à vendre", href: "/products", icon: ShoppingBag },
-    ...(isAdmin ? [{ name: "Administration", href: "/admin", icon: ShieldAlert }, { name: 'Categories', href: '/admin/categories', icon: Tag, admin: true }, { name: 'Ads', href: '/admin/ads', icon: Tag, admin: true }] : []),
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Close sidebar on route change on mobile
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [pathname])
+
+  if (!isMounted) {
+    return null
+  }
+
+  const navItems = [
+    { label: "Accueil", icon: Home, href: "/" },
+    { label: "Mes annonces", icon: Package, href: "/dashboard", active: pathname === "/dashboard" },
+    { label: "Publier une annonce", icon: PlusCircle, href: "/products/new" },
+    { label: "Favoris", icon: Heart, href: "/favorites" },
+    { label: "Messages", icon: MessageSquare, href: "/messages" },
+    { label: "Mon profil", icon: User, href: "/profile" },
+    { label: "Paramètres", icon: Settings, href: "/settings" },
+  ]
+
+  // Admin-only items
+  const adminItems = [
+    { label: "Administration", icon: ShieldCheck, href: "/admin" },
   ]
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen">
-        <Sidebar className="border-r w-[260px] hidden lg:block">
-          <SidebarHeader className="flex h-14 items-center border-b px-4">
-            <Link href="/dashboard" className="flex items-center gap-2 font-bold">
-              <Image 
-                src="/logo-moutouri.png" 
-                alt="Moutouri" 
-                width={32} 
-                height={32} 
-                className="h-8 w-auto" 
-              />
-              <span>Moutouri</span>
-            </Link>
-          </SidebarHeader>
-          <SidebarContent className="w-full lg:w-auto">
-            <SidebarMenu>
-              {navigation.map((item) => (
-                <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton asChild isActive={pathname === item.href}>
-                    <Link href={item.href}>
-                      <item.icon className="mr-2 h-5 w-5" />
-                      <span>{item.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarContent>
-          <SidebarFooter className="border-t p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Avatar>
-                  <AvatarImage src={user?.image || "/placeholder.svg?height=32&width=32"} alt={user?.firstName || "User"} />
-                  <AvatarFallback>{user ? `${user.firstName[0]}${user.lastName[0]}` : "U"}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{user ? `${user.firstName} ${user.lastName}` : "Utilisateur"}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email || "email@exemple.com"}</p>
+    <div className="flex min-h-screen bg-background">
+      {/* Sidebar overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 border-r bg-sidebar text-sidebar-foreground transition-transform lg:static lg:z-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}
+      >
+        <div className="flex h-16 items-center border-b px-4">
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="Moutouri"
+              width={40}
+              height={40}
+              className="rounded-md"
+            />
+            <span className="text-xl font-bold">Moutouri</span>
+          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        <div className="py-4">
+          <div className="px-4 mb-4">
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-2 mb-4">
+                <div className="relative w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                  {user.image ? (
+                    <Image
+                      src={user.image}
+                      alt={`${user.firstName} ${user.lastName}`}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span className="text-xl font-semibold text-muted-foreground">
+                      {user.firstName?.[0]}{user.lastName?.[0]}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">
+                    {user.firstName} {user.lastName}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user.email}
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <ModeToggle />
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => {
-                    logout();
-                    window.location.href = '/';
-                  }}
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span className="sr-only">Déconnexion</span>
+            ) : (
+              <div className="flex flex-col gap-2 mb-4">
+                <Button asChild>
+                  <Link href="/login">Connexion</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/register">S'inscrire</Link>
                 </Button>
               </div>
-            </div>
-          </SidebarFooter>
-        </Sidebar>
-        <div className="flex-1 overflow-auto">
-          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
-            <SidebarTrigger className="block lg:hidden" />
-            <div className="ml-auto flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
-                <Link href="/products">Parcourir les Produits</Link>
+            )}
+          </div>
+          <nav className="space-y-1 px-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  pathname === item.href
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.label}
+              </Link>
+            ))}
+
+            {isAdmin && (
+              <>
+                <Separator className="my-4 bg-sidebar-border" />
+                {adminItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      pathname === item.href
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    )}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                ))}
+              </>
+            )}
+          </nav>
+
+          {isAuthenticated && (
+            <div className="absolute bottom-4 left-0 right-0 px-4">
+              <Button
+                variant="outline"
+                className="w-full flex items-center gap-2 border-sidebar-border text-sidebar-foreground/80"
+                onClick={logout}
+              >
+                <LogOut className="h-4 w-4" />
+                Déconnexion
               </Button>
-              <Button size="sm" asChild>
-                <Link href="/products/new">
-                  <span className="hidden sm:inline">Publier une Annonce</span>
-                  <span className="sm:hidden">Publier</span>
-                </Link>
-              </Button>
             </div>
-          </header>
-          <main className="p-4 sm:p-6 md:p-8">{children}</main>
+          )}
         </div>
+      </aside>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
+          
+          <div className="ml-auto flex items-center gap-2">
+            {isAuthenticated ? (
+              <>
+                <Button variant="ghost" size="icon">
+                  <Bell className="h-5 w-5" />
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/products">Parcourir les Produits</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href="/products/new">Publier une Annonce</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/login">Connexion</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href="/register">S'inscrire</Link>
+                </Button>
+              </>
+            )}
+          </div>
+        </header>
+        
+        {/* Main content area */}
+        <main className="flex-1">
+          {children}
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   )
 }
 

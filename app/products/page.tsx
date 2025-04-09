@@ -1,12 +1,10 @@
 "use client"
-
 import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Loader2, Package, AlertCircle, PlusCircle } from "lucide-react"
 import Image from 'next/image'
 import SEO from "@/components/seo"
-import DashboardLayout from "@/components/dashboard-layout"
 import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,12 +12,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import { getProducts } from "@/services/products"
 import { getCategories } from "@/services/categories"
-import { SearchBar } from "@/components/search-bar"
-import GoogleAdSense from "@/components/google-adsense"
 import { ProductSearch } from "@/components/product-search"
 import { Advertisement } from '@/components/advertisement'
 import ProtectedRoute from "@/components/protected-route"
 import { useAuth } from "@/contexts/auth-context"
+import Navbar from "@/components/navbar"
+import AuthLayout from "@/components/auth-layout" 
 
 // Components that use search params need to be separated
 function ProductsContent() {
@@ -322,17 +320,54 @@ function ProductsContent() {
   );
 }
 
-// Main page component with Suspense
+// Main Products page with conditional layout based on auth state
 export default function ProductsPage() {
-  return (
-    <ProtectedRoute allowUnauthenticated={true}>
-      <Suspense fallback={
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-12 w-12 text-primary animate-spin" />
+  const { isAuthenticated, isLoading } = useAuth()
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  // Initial loading or not yet mounted
+  if (isLoading || !mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+      </div>
+    )
+  }
+  
+  // For authenticated users, use the auth layout with sidebar
+  if (isAuthenticated) {
+    return (
+      <AuthLayout redirectTo="/login">
+        <div className="p-4 sm:p-6 md:p-8">
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-96">
+              <Loader2 className="h-12 w-12 text-primary animate-spin" />
+            </div>
+          }>
+            <ProductsContent />
+          </Suspense>
         </div>
-      }>
-        <ProductsContent />
-      </Suspense>
-    </ProtectedRoute>
+      </AuthLayout>
+    )
+  }
+  
+  // For public/unauthenticated users, use a simpler layout
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-1">
+        <Suspense fallback={
+          <div className="flex items-center justify-center h-96">
+            <Loader2 className="h-12 w-12 text-primary animate-spin" />
+          </div>
+        }>
+          <ProductsContent />
+        </Suspense>
+      </main>
+    </div>
   )
 }
