@@ -42,13 +42,18 @@ export default function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/products" className="flex items-center gap-2">
               <Image 
-                src="/public/logo-moutouri.png" 
+                src="/logo-moutouri.png" 
                 alt="Moutouri Logo" 
                 width={40} 
                 height={40}
                 className="rounded-md"
+                onError={(e) => {
+                  console.error("Error loading logo image");
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/placeholder.svg";
+                }}
               />
               <span className="font-bold text-xl hidden sm:inline-block">Moutouri</span>
             </Link>
@@ -97,26 +102,6 @@ export default function Navbar() {
               </div>
             ) : isAuthenticated ? (
               <>
-                <Button 
-                  variant="ghost"
-                  size="icon"
-                  className="relative"
-                  asChild
-                >
-                  <Link href="/favorites">
-                    <Heart className="h-5 w-5" />
-                  </Link>
-                </Button>
-                
-                <Button 
-                  variant="ghost"
-                  size="icon"
-                  className="relative hidden sm:flex"
-                >
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
-                </Button>
-                
                 <Button asChild size="sm" className="hidden sm:flex">
                   <Link href="/products/new">
                     <PlusCircle className="mr-1 h-4 w-4" />
@@ -162,9 +147,6 @@ export default function Navbar() {
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/profile">Mon profil</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/settings">Paramètres</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
@@ -244,13 +226,6 @@ export default function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Publier une annonce
-                </Link>
-                <Link 
-                  href="/favorites" 
-                  className="px-4 py-2 rounded-md hover:bg-muted text-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Favoris
                 </Link>
                 <Link 
                   href="/profile" 

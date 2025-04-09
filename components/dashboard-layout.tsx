@@ -48,13 +48,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const navItems = [
-    { label: "Accueil", icon: Home, href: "/" },
+    { label: "Accueil", icon: Home, href: "/products" },
     { label: "Mes annonces", icon: Package, href: "/dashboard", active: pathname === "/dashboard" },
     { label: "Publier une annonce", icon: PlusCircle, href: "/products/new" },
-    { label: "Favoris", icon: Heart, href: "/favorites" },
-    { label: "Messages", icon: MessageSquare, href: "/messages" },
     { label: "Mon profil", icon: User, href: "/profile" },
-    { label: "Paramètres", icon: Settings, href: "/settings" },
   ]
 
   // Admin-only items
@@ -80,9 +77,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
       >
         <div className="flex h-16 items-center border-b px-4">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/products" className="flex items-center gap-2">
             <Image
-              src="/logo.png"
+              src="/logo-moutouri.png"
               alt="Moutouri"
               width={40}
               height={40}
@@ -194,7 +191,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -207,9 +204,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="ml-auto flex items-center gap-2">
             {isAuthenticated ? (
               <>
-                <Button variant="ghost" size="icon">
-                  <Bell className="h-5 w-5" />
-                </Button>
                 <Button variant="outline" size="sm" asChild>
                   <Link href="/products">Parcourir les Produits</Link>
                 </Button>
@@ -231,7 +225,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
         
         {/* Main content area */}
-        <main className="flex-1">
+        <main className="flex-1 p-4">
           {children}
         </main>
       </div>
