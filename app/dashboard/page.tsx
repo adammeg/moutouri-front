@@ -36,6 +36,13 @@ export default function DashboardPage() {
   const { toast } = useToast()
   const router = useRouter()
 
+  console.log("Dashboard render - Auth state:", { 
+    isAuthenticated, 
+    authLoading, 
+    userId: user?._id,
+    mounted
+  })
+
   // Set mounted state for client-side rendering
   useEffect(() => {
     setMounted(true)
@@ -45,7 +52,14 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUserProducts = async () => {
       // Only fetch when we're client-side, authenticated, and have user data
-      if (!mounted || authLoading || !isAuthenticated || !user?._id) {
+      if (!mounted || authLoading) {
+        console.log("Skipping product fetch - not ready yet")
+        return
+      }
+
+      if (!isAuthenticated || !user?._id) {
+        console.log("Skipping product fetch - not authenticated or no user ID")
+        setIsLoading(false)
         return
       }
 
@@ -55,6 +69,8 @@ export default function DashboardPage() {
         
         console.log(`📦 Fetching products for user: ${user._id}`)
         const response = await getUserProducts(user._id)
+        
+        console.log("User products API response:", response)
         
         if (response.success) {
           console.log(`✅ Found ${response.products?.length || 0} products`)
@@ -79,6 +95,7 @@ export default function DashboardPage() {
     try {
       setIsDeleting(true)
       
+      console.log(`🗑️ Deleting product: ${productId}`)
       const response = await deleteProduct(productId)
       
       if (response.success) {
@@ -97,6 +114,7 @@ export default function DashboardPage() {
         })
       }
     } catch (error) {
+      console.error("Error deleting product:", error)
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la suppression",
@@ -108,12 +126,38 @@ export default function DashboardPage() {
     }
   }
 
+  // Debug render
+  console.log("Dashboard render state:", { 
+    isLoading, 
+    productsCount: products.length,
+    error,
+    isAuthenticated,
+    userId: user?._id
+  })
+
   // Show loading state during initial client-side rendering
   if (!mounted || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Chargement...</span>
+        <span className="ml-2 text-muted-foreground">Chargement de l'authentification...</span>
+      </div>
+    )
+  }
+
+  // Not authenticated - show login message
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <h1 className="text-2xl font-bold mb-4">Connectez-vous pour accéder à votre tableau de bord</h1>
+          <p className="text-muted-foreground mb-6">
+            Vous devez être connecté pour voir vos annonces et gérer votre compte.
+          </p>
+          <Button asChild>
+            <Link href="/login">Se connecter</Link>
+          </Button>
+        </div>
       </div>
     )
   }
@@ -134,6 +178,7 @@ export default function DashboardPage() {
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Chargement des produits...</span>
         </div>
       ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded-md p-4 flex gap-3 items-start">
@@ -176,7 +221,7 @@ export default function DashboardPage() {
                   fill
                   className="object-cover"
                 />
-                <div className="absolute top-2 right-2 flex space-x-1">
+                <div className="absolute top-2 right-2 flex flex-col gap-1">
                   {product.isFeatured && (
                     <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-md font-medium">
                       Mis en avant
@@ -258,6 +303,6 @@ export default function DashboardPage() {
     </div>
   )
 
-  // Use AuthLayout to handle authentication and layout
-  return <AuthLayout>{dashboardContent}</AuthLayout>
+  // Return the dashboard without using AuthLayout to avoid potential issues
+  return dashboardContent;
 }

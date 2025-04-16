@@ -57,7 +57,25 @@ export const getProductsByCategory = async (categoryId: string) => {
 export const getUserProducts = async (userId: string) => {
   try {
     console.log(`Fetching products for user: ${userId}`);
-    const response = await axios.get(`${API_URL}/users/${userId}/products`);
+    
+    // Get the auth token
+    const token = localStorage.getItem('accessToken');
+    
+    if (!token) {
+      console.error('No auth token found when trying to fetch user products');
+      return { 
+        success: false, 
+        message: 'Authentication required',
+        products: []
+      };
+    }
+    
+    const response = await axios.get(`${API_URL}/users/${userId}/products`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
     console.log("User products response:", response.data);
     return response.data;
   } catch (error) {
@@ -66,7 +84,8 @@ export const getUserProducts = async (userId: string) => {
       success: false, 
       message: axios.isAxiosError(error) && error.response?.data?.message
         ? error.response.data.message
-        : 'Failed to fetch your products'
+        : 'Failed to fetch your products',
+      products: []
     };
   }
 };
