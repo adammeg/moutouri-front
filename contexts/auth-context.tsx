@@ -31,36 +31,74 @@ interface AuthContextType {
 
 // Set up axios defaults
 axios.defaults.withCredentials = true;
-const axiosInstance = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
+
+// FIXED: Create a consistent function for token management
+const tokenStorage = {
+  setTokens: (accessToken: string, refreshToken: string, user: any) => {
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem('user', JSON.stringify({
+      ...user,
+      accessToken // Store token in user object for compatibility
+    }));
+    console.log("🔑 Tokens saved to storage", { 
+      accessTokenLength: accessToken.length,
+      refreshTokenLength: refreshToken.length 
+    });
   },
-});
+  
+  clearTokens: () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    console.log("🧹 Auth tokens cleared");
+  },
+  
+  getAccessToken: () => {
+    return localStorage.getItem('accessToken');
+  },
+  
+  getRefreshToken: () => {
+    return localStorage.getItem('refreshToken');
+  },
+  
+  getUser: () => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return null;
+    
+    try {
+      return JSON.parse(userStr);
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      return null;
+    }
+  }
+};
 
 // Interceptor to handle token refresh
-axiosInstance.interceptors.response.use(
+axios.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
     console.log("🚨 API Error:", { 
       status: error.response?.status,
-      url: originalRequest.url,
-      method: originalRequest.method,
-      retrying: !!originalRequest._retry
+      url: originalRequest?.url,
+      method: originalRequest?.method,
+      retrying: !!originalRequest?._retry
     });
     
     // If error is 401 and not already retrying
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest?._retry) {
       console.log("🔄 Attempting token refresh");
       originalRequest._retry = true;
       
       try {
         // Get refresh token from localStorage
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = tokenStorage.getRefreshToken();
         
         if (!refreshToken) {
           console.log("❌ No refresh token available");
+          tokenStorage.clearTokens(); // Clean up any partial auth state
           return Promise.reject(error);
         }
         
@@ -73,30 +111,27 @@ axiosInstance.interceptors.response.use(
         if (response.data.success) {
           console.log("✅ Token refresh successful");
           // Save new tokens
-          localStorage.setItem('accessToken', response.data.accessToken);
-          localStorage.setItem('refreshToken', response.data.refreshToken);
+          tokenStorage.setTokens(
+            response.data.accessToken,
+            response.data.refreshToken,
+            tokenStorage.getUser()
+          );
           
           // Update authorization header
           originalRequest.headers['Authorization'] = `Bearer ${response.data.accessToken}`;
           
           console.log("🔄 Retrying original request");
           // Retry original request
-          return axiosInstance(originalRequest);
+          return axios(originalRequest);
         } else {
           console.log("❌ Token refresh failed with success: false");
+          tokenStorage.clearTokens();
         }
       } catch (refreshError) {
         console.error("🚨 Token refresh error:", refreshError);
-        console.log("🚪 Redirecting to login");
-        // If refresh fails, logout user
-        localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        // Don't immediately redirect, log first
-        console.log("🧹 Auth tokens cleared, will redirect to login");
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 500); // Small delay to ensure logs are visible
+        tokenStorage.clearTokens();
+
+        // Don't redirect here - let the Auth Provider handle it
         return Promise.reject(refreshError);
       }
     }
@@ -113,21 +148,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
-  const [token, setToken] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
     // Safe check for token in a way that works on both client and server
     const checkAuth = async () => {
       setIsLoading(true);
+      console.log("🔍 Checking authentication state");
       try {
         // Check for token in localStorage (client-side only)
-        const storedToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-        const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+        const storedToken = typeof window !== 'undefined' ? tokenStorage.getAccessToken() : null;
+        const storedUser = typeof window !== 'undefined' ? tokenStorage.getUser() : null;
         
         if (!storedToken || !storedUser) {
-          // No stored credentials, consider user not authenticated
+          console.log("👤 No stored credentials found");
           setUser(null);
           setIsAuthenticated(false);
           setIsAdmin(false);
@@ -136,17 +170,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Token exists, try to parse user
         try {
-          const userData = JSON.parse(storedUser);
-          setUser(userData);
+          setUser(storedUser);
           setIsAuthenticated(true);
-          setIsAdmin(userData.role === 'admin');
+          setIsAdmin(storedUser.role === 'admin');
+          console.log("👤 User authenticated from storage:", { 
+            id: storedUser._id,
+            role: storedUser.role,
+            isAdmin: storedUser.role === 'admin' 
+          });
+          
+          // Set auth header for future requests
+          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
         } catch (error) {
           console.error('Failed to parse stored user data:', error);
           
           // Invalid user data, clear storage
-          localStorage.removeItem('user');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+          tokenStorage.clearTokens();
           
           setUser(null);
           setIsAuthenticated(false);
@@ -162,48 +201,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Login handler
   const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    setError('');
-    
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, { email, password });
+      setIsLoading(true)
+      console.log(`📝 Attempting login for: ${email}`)
       
-      if (response.data.success && response.data.token) {
-        // Save token to both state and localStorage
-        setToken(response.data.token);
-        localStorage.setItem('token', response.data.token);
-        console.log('🔑 Token saved to localStorage');
+      const response = await axios.post(`${API_URL}/users/login`, {
+        email,
+        password
+      })
+      
+      console.log('Login response:', response.data.success ? 'Success' : 'Failed')
+      
+      if (response.data.success) {
+        // FIXED: Consistent token storage
+        const accessToken = response.data.accessToken;
+        const refreshToken = response.data.refreshToken;
         
-        const userData = response.data.user
-        const token = response.data.token || response.data.accessToken
-        
-        // Create the complete user object with token, ensuring _id is set correctly
-        const completeUser = {
-          ...userData,
-          _id: userData.id || userData._id,
-          token: token,
-          isAdmin: userData.role === 'admin'
+        // Create complete user object
+        const user = {
+          ...response.data.user,
+          isAdmin: response.data.user.role === 'admin'
         }
-        
-        console.log('✅ Login - User ID:', completeUser._id)
         
         // Set auth state
-        setUser(completeUser)
-        setIsAdmin(completeUser.isAdmin)
+        setUser(user)
+        setIsAuthenticated(true)
+        setIsAdmin(user.isAdmin)
         
-        // Save user data to localStorage
-        localStorage.setItem('user', JSON.stringify(completeUser))
-        
-        // Save tokens separately if needed
-        if (response.data.accessToken) {
-          localStorage.setItem('accessToken', response.data.accessToken)
-        }
-        if (response.data.refreshToken) {
-          localStorage.setItem('refreshToken', response.data.refreshToken)
-        }
+        // Save tokens consistently
+        tokenStorage.setTokens(accessToken, refreshToken, user);
         
         // Set axios auth header
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
         
         return { success: true, message: 'Login successful' }
       } else {
@@ -226,34 +255,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (userData: any) => {
     try {
       setIsLoading(true)
+      console.log('Registering user:', {...userData, password: '[REDACTED]'})
+      
       const response = await axios.post(`${API_URL}/users/register`, userData)
       
+      console.log('Registration response:', response.data.success ? 'Success' : 'Failed')
+      
       if (response.data.success) {
-        const token = response.data.token || response.data.accessToken
+        // FIXED: Consistent token storage
+        const accessToken = response.data.accessToken;
+        const refreshToken = response.data.refreshToken;
         
         // Create complete user object with token
         const user = {
           ...response.data.user,
-          token: token,
           isAdmin: response.data.user.role === 'admin'
         }
         
         // Set auth state
         setUser(user)
         setIsAdmin(user.isAdmin)
+        setIsAuthenticated(true)
         
-        // Save user data and tokens
-        localStorage.setItem('user', JSON.stringify(user))
-        
-        if (response.data.accessToken) {
-          localStorage.setItem('accessToken', response.data.accessToken)
-        }
-        if (response.data.refreshToken) {
-          localStorage.setItem('refreshToken', response.data.refreshToken)
-        }
+        // Save tokens consistently
+        tokenStorage.setTokens(accessToken, refreshToken, user);
         
         // Set axios auth header
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
         
         return { success: true, message: 'Registration successful' }
       } else {
@@ -277,11 +305,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear auth state
     setUser(null)
     setIsAdmin(false)
+    setIsAuthenticated(false)
     
     // Clear localStorage
-    localStorage.removeItem('user')
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
+    tokenStorage.clearTokens();
     
     // Clear axios auth header
     delete axios.defaults.headers.common['Authorization']
@@ -290,67 +317,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login')
   }
 
-  // Get auth token helper
+  // Get auth token helper - FIXED: More consistent implementation
   const getAuthToken = (): string | null => {
-    if (typeof window !== 'undefined') {
-      // First try to get from state
-      if (token) return token;
-      
-      // Then try to get from localStorage
-      const storedToken = localStorage.getItem('token');
-      console.log('🔑 Retrieved token from localStorage:', storedToken ? 'Found' : 'Not found');
-      
-      // If found in localStorage but not in state, update state
-      if (storedToken && !token) {
-        // Update state with token for future use
-        setToken(storedToken);
-      }
-      
-      return storedToken;
-    }
-    return null;
+    return tokenStorage.getAccessToken();
   }
-
-  const refreshTokenIfNeeded = async () => {
-    const accessToken = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
-    
-    if (!accessToken || !refreshToken) return false;
-    
-    // Check if token is expired or about to expire (within 5 mins)
-    const tokenData = parseJwt(accessToken);
-    const currentTime = Math.floor(Date.now() / 1000);
-    
-    if (tokenData && tokenData.exp && tokenData.exp - currentTime < 300) {
-      console.log("Token expired or expiring soon, refreshing...");
-      try {
-        const response = await axios.post(`${API_URL}/auth/refresh-token`, { refreshToken });
-        
-        if (response.data.success) {
-          // Update tokens in storage
-          localStorage.setItem('accessToken', response.data.accessToken);
-          localStorage.setItem('refreshToken', response.data.refreshToken);
-          return true;
-        }
-      } catch (error) {
-        console.error("Token refresh failed:", error);
-        // On refresh failure, force logout
-        logout();
-        return false;
-      }
-    }
-    
-    return true;
-  };
-
-  // Helper to parse JWT
-  const parseJwt = (token: string) => {
-    try {
-      return JSON.parse(atob(token.split('.')[1]));
-    } catch (e) {
-      return null;
-    }
-  };
 
   return (
     <AuthContext.Provider
