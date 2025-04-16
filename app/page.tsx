@@ -1,20 +1,28 @@
-'use client';
+"use client"
 
-import Link from "next/link";
-import Image from "next/image";
-import { motion } from "framer-motion";
-import { BikeIcon as Motorcycle, Sparkles, Wrench } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import GoogleAdSense from '@/components/google-adsense';
-import HeroBackground from "@/components/hero-background";
-import PromotionalAds from '@/components/promotional-ads';
-import { Advertisement } from '@/components/advertisement'
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import Image from "next/image"
+import { motion } from "framer-motion"
+import { Loader2, Search, PlusCircle, ChevronRight, BikeIcon, Wrench, Sparkles } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { ProductCard } from "@/components/product-card"
+import { CategoryCard } from "@/components/category-card"
+import { getLatestProducts } from "@/services/products"
+import { getCategories } from "@/services/categories"
+import SEO from "@/components/seo"
+import { AdvancedAd } from "@/components/advanced-ad"
+import Navbar from "@/components/navbar"
+import { AD_POSITIONS } from "@/config/ad-positions"
+import HeroBackground from "@/components/hero-background"
+import PopularSearchTerms from "@/components/popular-search-terms"
 
 // Animation variants
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
 };
 
 const staggerContainer = {
@@ -22,409 +30,356 @@ const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2
+      staggerChildren: 0.1
     }
   }
 };
 
-export default function Home() {
-  return (
-    <div className="flex flex-col min-h-screen">
-      <header className="bg-black text-white py-6 relative z-10">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Image
-              src="/logo-moutouri.png"
-              alt="Moutouri"
-              width={32}
-              height={32}
-              className="h-8 w-8"
-            />
-            <h1 className="text-2xl font-bold">Moutouri</h1>
-          </div>
-          <div className="flex gap-4">
-            <Button asChild variant="ghost" className="text-white hover:text-primary">
-              <Link href="/login">Connexion</Link>
-            </Button>
-            <Button asChild className="bg-primary hover:bg-primary/90">
-              <Link href="/register">S'inscrire</Link>
-            </Button>
-          </div>
+export default function HomePage() {
+  const [featuredProducts, setFeaturedProducts] = useState([])
+  const [categories, setCategories] = useState([])
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true)
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+  const [error, setError] = useState(null)
+  const [mounted, setMounted] = useState(false)
+  
+  // Set mounted flag for client-side rendering
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Fetch latest products
+  useEffect(() => {
+    if (!mounted) return;
+    
+    const fetchLatestProducts = async () => {
+      try {
+        setIsLoadingProducts(true)
+        console.log("📦 Fetching latest products");
+        const response = await getLatestProducts(10)
+        
+        if (response.success) {
+          console.log(`✅ Found ${response.products.length} latest products`);
+          setFeaturedProducts(response.products as any)
+        } else {
+          console.error("❌ Failed to fetch products:", response.message);
+          setError(response.message || "Failed to load products" as any)
+        }
+      } catch (error) {
+        console.error("❌ Error fetching products:", error)
+      } finally {
+        setIsLoadingProducts(false)
+      }
+    }
+    
+    fetchLatestProducts()
+  }, [mounted])
+  
+  // Fetch categories
+  useEffect(() => {
+    if (!mounted) return;
+    
+    const fetchCategories = async () => {
+      try {
+        setIsLoadingCategories(true)
+        console.log("🏷️ Fetching categories");
+        const response = await getCategories()
+        
+        if (response.success) {
+          console.log(`✅ Found ${response.categories.length} categories`);
+          setCategories(response.categories)
+        } else {
+          console.warn("⚠️ Failed to fetch categories:", response.message);
+        }
+      } catch (error) {
+        console.error("❌ Error fetching categories:", error)
+      } finally {
+        setIsLoadingCategories(false)
+      }
+    }
+    
+    fetchCategories()
+  }, [mounted])
+  
+  // If not mounted yet (server-side), return minimal UI to prevent hydration issues
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </header>
+      </div>
+    );
+  }
 
+  return (
+    <div className="min-h-screen flex flex-col">
+      <SEO 
+        title="Moutouri - Premier marketplace de motos et scooters en Tunisie"
+        description="Achetez et vendez des motos, scooters et pièces détachées en Tunisie. Trouvez votre prochaine moto ou vendez la vôtre facilement."
+      />
+      
+      <Navbar />
+      
       <main className="flex-1">
-        {/* Hero section with animated background */}
-        <section className="py-24 relative overflow-hidden">
+        {/* Hero Section */}
+        <section className="relative py-12 sm:py-16 md:py-24 text-center">
           <HeroBackground />
-
-          <div className="container mx-auto px-4 text-center relative z-10">
+          
+          <div className="container mx-auto px-4 relative z-10">
             <motion.div
               initial="hidden"
               animate="visible"
               variants={fadeIn}
-              transition={{ duration: 0.7 }}
             >
-              <h2 className="text-4xl md:text-6xl font-bold mb-6 text-white">
-                La Marketplace Ultime pour Motards
-              </h2>
-            </motion.div>
-            <section className="container mx-auto px-4 -mt-6 mb-12">
-              <PromotionalAds position="home-hero" className="shadow-lg" />
-            </section>
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={fadeIn}
-              transition={{ duration: 0.7, delay: 0.2 }}
-            >
-              <p className="text-xl md:text-2xl mb-10 text-gray-200 max-w-3xl mx-auto">
-                Achetez, vendez et échangez des motos, scooters et pièces dans une communauté
-                créée par des motards, pour des motards.
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+                Trouvez votre prochaine moto en Tunisie
+              </h1>
+              <p className="text-lg sm:text-xl mb-8 max-w-2xl mx-auto text-muted-foreground">
+                Premier marketplace spécialisé dans l'achat et la vente de motos, scooters et pièces détachées en Tunisie
               </p>
             </motion.div>
-
+            
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              initial="hidden"
+              animate="visible"
+              variants={fadeIn}
+              className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto"
             >
-              <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-lg">
-                <Link href="/products">Voir les produits en vente</Link>
+              <Button asChild size="lg" className="flex-1">
+                <Link href="/products">
+                  <Search className="mr-2 h-5 w-5" />
+                  Parcourir les annonces
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="flex-1">
+                <Link href="/products/new">
+                  <PlusCircle className="mr-2 h-5 w-5" />
+                  Publier une annonce
+                </Link>
               </Button>
             </motion.div>
-          </div>
-        </section>
-
-        {/* Top advertisement banner */}
-        <Advertisement 
-          position="home-hero" 
-          className="container mx-auto my-8"
-          fallbackText="Espace publicitaire disponible" 
-        />
-
-        {/* Categories section with images */}
-        <section className="py-16 container mx-auto px-4">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-            className="text-3xl font-bold mb-10 text-center"
-          >
-            Explorez les Catégories
-          </motion.h2>
-
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
-          >
-            <motion.div variants={fadeIn} transition={{ duration: 0.5 }}>
-              <Card className="border-2 border-primary/20 hover:border-primary transition-all duration-300 overflow-hidden group">
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src="images/sportbike.jpg"
-                    alt="Moto sportive"
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <CardHeader className="text-center">
-                  <Motorcycle className="w-12 h-12 mx-auto text-primary" />
-                  <CardTitle>Motos</CardTitle>
-                  <CardDescription>Sportives, cruisers, aventure et plus</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p>
-                    Trouvez votre moto de rêve parmi des milliers d'annonces de motards. Toutes marques et modèles
-                    disponibles.
-                  </p>
-                </CardContent>
-                <CardFooter className="flex justify-center">
-                  <Button asChild variant="outline">
-                    <Link href="/login">Parcourir les Motos</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeIn} transition={{ duration: 0.5 }}>
-              <Card className="border-2 border-primary/20 hover:border-primary transition-all duration-300 overflow-hidden group">
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src="images/scooter.png"
-                    alt="Scooter électrique"
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <CardHeader className="text-center">
-                  <Sparkles className="w-12 h-12 mx-auto text-primary" />
-                  <CardTitle>Scooters</CardTitle>
-                  <CardDescription>Urbains et options électriques</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p>
-                    Découvrez des scooters efficaces et élégants pour la conduite en ville. Options électriques et à
-                    essence disponibles.
-                  </p>
-                </CardContent>
-                <CardFooter className="flex justify-center">
-                  <Button asChild variant="outline">
-                    <Link href="/login">Parcourir les Scooters</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeIn} transition={{ duration: 0.5 }}>
-              <Card className="border-2 border-primary/20 hover:border-primary transition-all duration-300 overflow-hidden group">
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src="images/parts.png"
-                    alt="Pièces de moto"
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <CardHeader className="text-center">
-                  <Wrench className="w-12 h-12 mx-auto text-primary" />
-                  <CardTitle>Pièces</CardTitle>
-                  <CardDescription>Composants d'origine et aftermarket</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p>
-                    Achetez des pièces de qualité pour réparer, entretenir ou améliorer votre moto. Pièces neuves et
-                    d'occasion de vendeurs de confiance.
-                  </p>
-                </CardContent>
-                <CardFooter className="flex justify-center">
-                  <Button asChild variant="outline">
-                    <Link href="/login">Parcourir les Pièces</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-          </motion.div>
-        </section>
-
-        {/* Middle section advertisement */}
-        <Advertisement 
-          position="home-middle" 
-          className="my-10"
-        />
-
-        {/* Features section with animations */}
-        <section className="py-16 bg-muted relative overflow-hidden">
-          <div className="absolute -right-24 -top-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
-          <div className="absolute -left-24 -bottom-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-
-          <div className="container mx-auto px-4 relative z-10">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-              className="text-3xl font-bold mb-10 text-center"
-            >
-              Pourquoi Choisir Moutouri?
-            </motion.h2>
-
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            >
-              {[
-                { title: "Vendeurs Vérifiés", desc: "Notre communauté de vendeurs est vérifiée pour garantir des annonces légitimes et des transactions sécurisées." },
-                { title: "Annonces Détaillées", desc: "Informations complètes sur les produits, images de haute qualité et transparence des prix." },
-                { title: "Communauté de Motards", desc: "Connectez-vous avec d'autres passionnés qui partagent votre passion pour les motos et la conduite." },
-                { title: "Publication Facile", desc: "Publiez vos articles à vendre rapidement grâce à notre processus simplifié et convivial." },
-                { title: "Compatible Mobile", desc: "Accédez à la marketplace n'importe quand, n'importe où depuis votre smartphone ou tablette." }
-              ].map((feature, i) => (
-                <motion.div
-                  key={i}
-                  variants={fadeIn}
-                  className="bg-card p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
-                >
-                  <motion.h3
-                    className="text-xl font-bold mb-3 text-primary"
-                    whileHover={{ x: 5 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                  >
-                    {feature.title}
-                  </motion.h3>
-                  <p>{feature.desc}</p>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Testimonial section (new) */}
-        <section className="py-16 container mx-auto px-4">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-            className="text-3xl font-bold mb-10 text-center"
-          >
-            Ce que disent nos utilisateurs
-          </motion.h2>
-
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto"
-          >
-            <motion.div
-              variants={fadeIn}
-              className="bg-card p-6 rounded-lg shadow border border-primary/10"
-            >
-              <div className="flex items-center mb-4">
-                <div className="rounded-full bg-primary/10 p-2 mr-4">
-                  <Image
-                    src="images/avatar1.png"
-                    alt="Utilisateur"
-                    width={50}
-                    height={50}
-                    className="rounded-full"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-bold">Mehdi B.</h4>
-                  <p className="text-sm text-muted-foreground">Motard depuis 5 ans</p>
-                </div>
-              </div>
-              <p className="italic">« J'ai trouvé ma Kawasaki Z900 sur Moutouri en seulement deux jours. Le contact avec le vendeur était super simple et le prix était juste. »</p>
-            </motion.div>
-
-            <motion.div
-              variants={fadeIn}
-              className="bg-card p-6 rounded-lg shadow border border-primary/10"
-            >
-              <div className="flex items-center mb-4">
-                <div className="rounded-full bg-primary/10 p-2 mr-4">
-                  <Image
-                    src="images/avatar2.png"
-                    alt="Utilisateur"
-                    width={50}
-                    height={50}
-                    className="rounded-full"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-bold">Sonia T.</h4>
-                  <p className="text-sm text-muted-foreground">Passionnée de scooters</p>
-                </div>
-              </div>
-              <p className="italic">« J'ai pu vendre mon ancien scooter et acheter un modèle électrique en utilisant Moutouri. La communauté est vraiment accueillante ! »</p>
-            </motion.div>
-          </motion.div>
-        </section>
-
-        {/* Call to action (enhanced) */}
-        <section className="py-16 bg-primary/5 relative overflow-hidden">
-          <div className="container mx-auto px-4 text-center relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              viewport={{ once: true }}
-              className="max-w-3xl mx-auto"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                Prêt à rejoindre la communauté Moutouri?
-              </h2>
-              <p className="text-lg mb-8 text-muted-foreground">
-                Que vous cherchiez à acheter ou à vendre, Moutouri vous connecte avec des passionnés de deux-roues.
-              </p>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
-                  <Link href="/register">Créer un compte gratuitement</Link>
-                </Button>
-              </motion.div>
-            </motion.div>
-          </div>
-
-          {/* Decorative elements */}
-          <div className="absolute left-0 right-0 -bottom-10 h-20 bg-gradient-to-t from-background to-transparent"></div>
-        </section>
-
-        {/* Ads */}
-        <GoogleAdSense
-          slot="2488891530"
-          format="horizontal"
-          className="adsense-container"
-        />
-
-        <GoogleAdSense
-          slot="2488891530"
-          className="adsense-container my-8"
-        />
-
-        {/* Bottom advertisement before footer */}
-        <Advertisement 
-          position="home-bottom" 
-          className="container mx-auto my-12"
-        />
-      </main>
-
-      <footer className="bg-black text-white py-10">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center gap-2 mb-4 md:mb-0">
-              <Image
-                src="/logo-moutouri.png"
-                alt="Moutouri"
-                width={24}
-                height={24}
-                className="h-6 w-6"
+            
+            {/* Hero Banner Ad */}
+            <div className="max-w-4xl mx-auto mt-10">
+              <AdvancedAd 
+                position={AD_POSITIONS.HOME_HERO}
+                variant="banner"
               />
-              <span className="text-xl font-bold">Moutouri</span>
             </div>
-            <div className="flex flex-col md:flex-row gap-8">
-              <div>
-                <h3 className="font-bold mb-2 text-primary">Contactez-nous</h3>
-                <p className="text-sm">
-                  Moutouri est une plateforme de vente et d'achat de motos et de scooters en Tunisie.
-                </p>
-                <p className="text-sm mt-2">
-                  <span className="block">adam.bhedj13@gmail.com</span>
-                  <span className="block">+216 90053729</span>
-                </p>
+          </div>
+        </section>
+        
+        {/* Featured Products Section */}
+        <section className="py-12 md:py-16 bg-muted/10">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold">Dernières annonces</h2>
+              <Link href="/products" className="text-primary hover:underline flex items-center text-sm sm:text-base">
+                Voir toutes les annonces
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </div>
+            
+            {isLoadingProducts ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-              <div>
-                <h3 className="font-bold mb-2 text-primary">Nous suivre</h3>
-                <div className="flex gap-3">
-                  <Link href="#" className="hover:text-primary transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-                  </Link>
-                  <Link href="#" className="hover:text-primary transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
-                  </Link>
-                </div>
+            ) : error ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {error}
+              </div>
+            ) : (
+              <motion.div 
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+              >
+                {featuredProducts.slice(0, 4).map((product: any) => (
+                  <motion.div key={product._id} variants={fadeIn}>
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+        </section>
+        
+        {/* Middle Ad Banner */}
+        <section className="py-8 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <AdvancedAd 
+              position={AD_POSITIONS.HOME_MIDDLE}
+              variant="banner"
+            />
+          </div>
+        </section>
+        
+        {/* Features Section */}
+        <section className="py-12 md:py-16 bg-background">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10">
+              Pourquoi choisir Moutouri ?
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <Card className="border bg-card">
+                <CardHeader>
+                  <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-2">
+                    <BikeIcon className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Large choix de motos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Des milliers d'annonces de motos, scooters et pièces détachées de particuliers et professionnels dans toute la Tunisie.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border bg-card">
+                <CardHeader>
+                  <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-2">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Facile et gratuit</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Publiez votre annonce gratuitement en quelques minutes et attirez des acheteurs potentiels rapidement.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border bg-card">
+                <CardHeader>
+                  <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-2">
+                    <Wrench className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Pièces détachées</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Trouvez toutes les pièces dont vous avez besoin pour votre moto, des accessoires aux pièces mécaniques.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+        
+        {/* Categories Section */}
+        <section className="py-12 md:py-16 bg-muted/5">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-8">Catégories populaires</h2>
+            
+            {isLoadingCategories ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {categories.slice(0, 6).map((category: any) => (
+                  <CategoryCard key={category._id} category={category} />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+        
+        {/* More Products with Integrated Ad */}
+        <section className="py-12 md:py-16 bg-background">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-8">À découvrir également</h2>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {/* First set of products */}
+              {featuredProducts.slice(4, 7).map((product: any) => (
+                <ProductCard key={product.id || product._id} product={product} />
+              ))}
+              
+              {/* Integrated ad as a "product" */}
+              <div className="h-full">
+                <AdvancedAd 
+                  position={AD_POSITIONS.HOME_FEATURED}
+                  variant="card"
+                  className="h-full"
+                />
               </div>
             </div>
           </div>
-          <div className="mt-8 text-center text-muted-foreground">
-            <p>© {new Date().getFullYear()} Moutouri. Tous droits réservés.</p>
+        </section>
+        
+        {/* Popular Search Terms */}
+        <PopularSearchTerms />
+        
+        {/* Bottom Ad Banner */}
+        <section className="py-8 bg-muted/10">
+          <div className="container mx-auto px-4">
+            <AdvancedAd 
+              position={AD_POSITIONS.HOME_BOTTOM}
+              variant="banner"
+            />
+          </div>
+        </section>
+      </main>
+      
+      {/* Footer */}
+      <footer className="bg-muted/30 py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <Link href="/" className="flex items-center gap-2 mb-4">
+                <Image 
+                  src="/logo-moutouri.png" 
+                  alt="Moutouri" 
+                  width={40} 
+                  height={40} 
+                  className="rounded-md"
+                />
+                <span className="text-xl font-bold">Moutouri</span>
+              </Link>
+              <p className="text-muted-foreground mb-4">
+                Premier marketplace spécialisé dans l'achat et la vente de motos, scooters et pièces détachées en Tunisie.
+              </p>
+              <div className="flex space-x-4">
+                <Link href="#" className="hover:text-primary transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                </Link>
+                <Link href="#" className="hover:text-primary transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
+                </Link>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-bold mb-4">Liens rapides</h3>
+              <ul className="space-y-2">
+                <li><Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors">Parcourir les annonces</Link></li>
+                <li><Link href="/products/new" className="text-muted-foreground hover:text-foreground transition-colors">Publier une annonce</Link></li>
+                <li><Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">À propos</Link></li>
+                <li><Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-bold mb-4">Contact</h3>
+              <ul className="space-y-2 text-muted-foreground">
+                <li>Tunis, Tunisie</li>
+                <li>contact@moutouri.tn</li>
+                <li>+216 90053729</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="mt-8 pt-8 border-t border-muted">
+            <p className="text-center text-muted-foreground">
+              © {new Date().getFullYear()} Moutouri. Tous droits réservés.
+            </p>
           </div>
         </div>
       </footer>
     </div>
-  );
+  )
 }

@@ -1,88 +1,102 @@
-import Link from 'next/link'
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { formatPrice } from "@/lib/utils"
-import { Heart, Eye, MapPin } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import SafeImage from '@/components/safe-image'
-import { ReactNode } from 'react'
-import Image from 'next/image'
+"use client"
 
-export interface ProductCardProps {
-  product: any
-  actions?: ReactNode
-  children?: ReactNode
+import { useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { Card, CardContent, CardFooter } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Loader2 } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
+import { fr } from 'date-fns/locale'
+import { Product } from '@/types/product'
+
+interface ProductCardProps {
+  product: Product
+  className?: string
 }
 
-export function ProductCard({ product, actions, children }: ProductCardProps) {
-  if (!product) return <></> 
-
-  // Extract username nicely if it exists
-  const sellerName = product.publisher?.username || 
-                     product.publisher?.firstName || 
-                     (product.publisher?.email ? product.publisher.email.split('@')[0] : '');
-
+export function ProductCard({ product, className = '' }: ProductCardProps) {
+  const [imageError, setImageError] = useState(false)
+  const [imageLoading, setImageLoading] = useState(true)
+  
+  const imageUrl = product.images && product.images.length > 0 
+    ? product.images[0] 
+    : '/placeholder.png'
+  
   return (
-    <Card className="overflow-hidden h-full flex flex-col">
-      <div className="relative aspect-[4/3] overflow-hidden">
-        <Link href={`/products/${product._id}`}>
-        <Image
-  src={product.images[0]}
-  alt={`${product.title} - ${(product.title) || ''} ${product.year || ''} ${product.condition || ''} à ${product.price} DT en Tunisie`}
-  width={400}
-  height={300}
-  className="object-cover w-full h-full transition-all duration-300 group-hover:scale-105"
-/>
-        </Link>
-        {product.condition && (
-          <Badge 
-            variant={product.condition === 'New' ? "default" : "outline"}
-            className="absolute top-2 left-2 z-10 bg-background/80"
-          >
-            {product.condition}
-          </Badge>
-        )}
-        {product.featured && (
-          <Badge variant="default" className="absolute top-2 right-2 z-10">
-            En vedette
-          </Badge>
-        )}
-      </div>
-      <CardContent className="p-3 flex-grow flex flex-col">
-        <h3 className="font-semibold line-clamp-2 mb-1 text-sm sm:text-base">
-          <Link href={`/products/${product._id}`}>
-            {product.title}
-          </Link>
-        </h3>
-        <p className="text-primary font-bold mt-auto text-base sm:text-lg">
-          {product.price?.toLocaleString()} DT
-        </p>
-        <div className="flex items-center text-xs text-muted-foreground mt-2">
-          <MapPin className="h-3 w-3 mr-1" />
-          <span className="truncate">{product.location || 'Location N/A'}</span>
+    <Link href={`/products/${product._id}`} className={`block ${className}`}>
+      <Card className="overflow-hidden h-full transition-all duration-200 hover:shadow-md product-card">
+        <div className="relative aspect-[4/3] bg-muted">
+          {imageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+            </div>
+          )}
+          
+          <Image
+            src={imageUrl}
+            alt={product.title}
+            fill
+            className={`object-cover transition-opacity ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
+            onLoad={() => setImageLoading(false)}
+            onError={() => {
+              setImageError(true)
+              setImageLoading(false)
+            }}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+          
+          {/* Status badges */}
+          <div className="absolute top-2 right-2 flex flex-col gap-1">
+            {product.isFeatured && (
+              <Badge className="bg-primary/90 hover:bg-primary text-primary-foreground">
+                Mis en avant
+              </Badge>
+            )}
+            
+            {product.isVerified && (
+              <Badge className="bg-green-500/90 hover:bg-green-500 text-white">
+                Vérifié
+              </Badge>
+            )}
+            
+            {product.status === 'sold' && (
+              <Badge className="bg-red-500/90 hover:bg-red-500 text-white">
+                Vendu
+              </Badge>
+            )}
+          </div>
         </div>
-        {sellerName && (
-          <div className="text-sm text-muted-foreground mb-2">
-            de {sellerName}
+        
+        <CardContent className="p-4">
+          <h3 className="font-medium text-base sm:text-lg line-clamp-1">{product.title}</h3>
+          <p className="text-primary font-bold mt-1">
+            {product.price.toLocaleString()} DT
+            
+            {product.discountPrice && (
+              <span className="ml-2 text-muted-foreground line-through text-sm">
+                {product.discountPrice.toLocaleString()} DT
+              </span>
+            )}
+          </p>
+          
+          <div className="flex items-center gap-1 mt-2">
+            <p className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(product.createdAt), { 
+                locale: fr, 
+                addSuffix: true 
+              })}
+            </p>
+            
+            {product.location && (
+              <>
+                <span className="text-xs text-muted-foreground">•</span>
+                <p className="text-xs text-muted-foreground">{product.location}</p>
+              </>
+            )}
           </div>
-        )}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-          {product.description || "No description available"}
-        </p>
-      </CardContent>
-      <CardFooter className="p-4 pt-0">
-        {actions || (
-          <div className="flex gap-2 w-full">
-            <Button variant="outline" size="sm" className="w-full">
-              <Eye className="h-4 w-4 mr-1" />
-              Voir
-            </Button>
-            <Button variant="outline" size="sm" className="w-10 px-0">
-              <Heart className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </CardFooter>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }

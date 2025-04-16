@@ -17,42 +17,60 @@ export default function AuthLayout({
   adminOnly = false,
   redirectTo = '/login'
 }: AuthLayoutProps) {
-  const [isMounted, setIsMounted] = useState(false)
+  const [isClient, setIsClient] = useState(false)
   const { isAuthenticated, isLoading, isAdmin, user } = useAuth()
   const router = useRouter()
 
+  // Mark client-side hydration
   useEffect(() => {
-    setIsMounted(true)
-    
-    // Only redirect after client-side hydration
-    if (isMounted && !isLoading) {
-      console.log("Auth check:", { isAuthenticated, isAdmin, adminOnly, user });
+    setIsClient(true)
+  }, [])
+
+  // Handle auth-dependent redirects
+  useEffect(() => {
+    if (isClient && !isLoading) {
+      console.log("🔒 Auth Layout - Auth state:", { 
+        isAuthenticated, 
+        isAdmin, 
+        isLoading,
+        adminOnly,
+        path: window.location.pathname
+      });
       
       if (!isAuthenticated) {
-        console.log("Redirecting to login from:", window.location.pathname);
         const currentPath = encodeURIComponent(window.location.pathname);
+        console.log(`⤴️ Redirecting to ${redirectTo}?redirectTo=${currentPath}`);
         router.push(`${redirectTo}?redirectTo=${currentPath}`);
-      } else if (adminOnly && !isAdmin) {
-        console.log("Not admin, redirecting to dashboard");
+        return;
+      }
+      
+      if (adminOnly && !isAdmin) {
+        console.log("⤴️ Not admin, redirecting to dashboard");
         router.push('/dashboard');
+        return;
       }
     }
-  }, [isAuthenticated, isAdmin, isLoading, router, adminOnly, redirectTo, isMounted])
+  }, [isAuthenticated, isAdmin, isLoading, router, adminOnly, redirectTo, isClient])
 
-  // While checking authentication
-  if (isLoading || !isMounted) {
+  // Only show loading on client-side to prevent hydration mismatch
+  if (!isClient || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     )
   }
 
-  // If authenticated and has proper permissions, render children with dashboard layout
-  if (isAuthenticated && (!adminOnly || isAdmin)) {
-    return <DashboardLayout>{children}</DashboardLayout>
+  // If not authenticated or doesn't have proper role, render nothing while redirecting
+  if (!isAuthenticated || (adminOnly && !isAdmin)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        <span className="ml-2 text-muted-foreground">Redirection...</span>
+      </div>
+    );
   }
 
-  // Otherwise render nothing (while redirecting)
-  return null
+  // If authenticated with proper permissions, render content with dashboard layout
+  return <DashboardLayout>{children}</DashboardLayout>
 } 

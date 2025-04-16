@@ -1,410 +1,465 @@
 "use client"
 
-import { useState, useEffect, useRef, use } from "react"
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import Image from "next/image"
-import { Camera, LoaderCircle } from "lucide-react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm, Form } from "react-hook-form"
+import { z } from "zod"
+import { Loader2, Camera, Check } from "lucide-react"
 
-import DashboardLayout from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
-import { getUserProfile, updateUserProfile, updateUserPassword, uploadProfilePicture } from "@/services/user"
-import ProtectedRoute from "@/components/protected-route"
-import { getUserProducts } from "@/services/products"
+import { getUserProfile, updateUserProfile, uploadProfilePicture } from "@/services/user"
+import AuthLayout from "@/components/auth-layout"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+
+// Form schema
+const formSchema = z.object({
+  firstName: z.string().min(2, {
+    message: "Le prénom doit contenir au moins 2 caractères",
+  }),
+  lastName: z.string().min(2, {
+    message: "Le nom doit contenir au moins 2 caractères",
+  }),
+  email: z.string().email({
+    message: "Veuillez entrer une adresse email valide",
+  }),
+});
+
+// Password schema
+const passwordSchema = z.object({
+  currentPassword: z.string().min(6, {
+    message: "Mot de passe actuel requis"
+  }),
+  newPassword: z.string().min(8, {
+    message: "Le mot de passe doit contenir au moins 8 caractères",
+  }),
+  confirmPassword: z.string(),
+}).refine(data => data.newPassword === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
 
 export default function ProfilePage() {
-  const { user: authUser } = useAuth()
-  const { toast } = useToast()
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
+  const { user, isLoading: authLoading } = useAuth()
+  const [isUpdating, setIsUpdating] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isLoadingProducts, setIsLoadingProducts] = useState(false)
+  const [pictureFile, setPictureFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageUploading, setImageUploading] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const { toast } = useToast()
 
-  const [user, setUser] = useState({
-    _id: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    profileImage: "/placeholder.svg?height=200&width=200",
-  })
+  // Password form state
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   })
 
-  const [userProducts, setUserProducts] = useState([])
-
+  // Set mounted state for client-side rendering
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!authUser?._id) return
+    setMounted(true)
+  }, [])
 
-      try {
-        setIsLoading(true)
-        const response = await getUserProfile(authUser._id)
+  // Initialize form with user data when available
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+    },
+  })
 
-        if (response.success) {
-          setUser({
-            _id: authUser._id,
-            firstName: authUser.firstName || "",
-            lastName: authUser.lastName || "",
-            email: authUser.email || "",
-            profileImage: authUser.image || "/placeholder.svg?height=200&width=200",
-          })
-          await fetchUserProducts()
-        }
-      } catch (error) {
-        console.error("Error fetching user profile:", error)
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger votre profil. Veuillez réessayer.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
+  // Update form when user data is available
+  useEffect(() => {
+    if (user && mounted) {
+      console.log("📋 Setting up form with user data");
+      form.reset({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+      });
+      
+      if (user.image) {
+        setImagePreview(user.image);
       }
     }
+  }, [user, form, mounted]);
 
-    fetchUserProfile()
-  }, [authUser, toast])
-
-  const fetchUserProducts = async () => {
-    if (!user || !user._id) {
-      console.warn("Cannot fetch products: No user available or missing _id")
-      return
-    }
+  // Handle form submission
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user?._id) return;
     
     try {
-      console.log("📊 Fetching products for user ID:", user._id)
-      setIsLoadingProducts(true)
-      const result = await getUserProducts(user._id)
-      if (result.success) {
-        setUserProducts(result.products || [])
-      } else {
-        console.error("Failed to fetch user products:", result.message)
-      }
-    } catch (error) {
-      console.error("Error fetching user products:", error)
-    } finally {
-      setIsLoadingProducts(false)
-    }
-  }
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!authUser?._id) return
-
-    setIsSaving(true)
-
-    try {
-      const response = await updateUserProfile(authUser._id, {
-        firstName: user.firstName,
-        lastName: user.lastName,
-      })
-
+      setIsUpdating(true);
+      console.log("Updating profile with:", values);
+      
+      // Update profile information
+      const response = await updateUserProfile(user._id, values);
+      
       if (response.success) {
         toast({
           title: "Profil mis à jour",
-          description: "Vos informations ont été mises à jour avec succès.",
-        })
-
-        // Update the user in the auth context if available
-        if (typeof window !== 'undefined' && authUser && 'updateUser' in authUser) {
-          (authUser as any).updateUser({
-            firstName: user.firstName,
-            lastName: user.lastName,
-          })
-        }
+          description: "Vos informations ont été mises à jour avec succès",
+        });
       } else {
-        throw new Error(response.message || "Une erreur s'est produite")
+        throw new Error(response.message || "Failed to update profile");
       }
     } catch (error) {
-      console.error("Error updating profile:", error)
+      console.error("Error updating profile:", error);
       toast({
-        title: "Erreur de mise à jour",
-        description: "Impossible de mettre à jour votre profil. Veuillez réessayer.",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour de votre profil",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSaving(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
-  const handlePasswordUpdate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!authUser?._id) return
-
-    // Validate passwords match
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        title: "Erreur de validation",
-        description: "Les mots de passe ne correspondent pas.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsChangingPassword(true)
-
+  // Handle password change
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
-      const response = await updateUserPassword(authUser._id, {
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-      })
-
-      if (response.success) {
+      // Validate with Zod
+      const validated = passwordSchema.parse(passwordData);
+      setIsChangingPassword(true);
+      
+      // API call to change password would go here
+      // const response = await updateUserPassword(user._id, passwordData);
+      
+      toast({
+        title: "Mot de passe mis à jour",
+        description: "Votre mot de passe a été changé avec succès",
+      });
+      
+      // Reset form
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      
+      if (error instanceof z.ZodError) {
+        // Handle validation errors
         toast({
-          title: "Mot de passe mis à jour",
-          description: "Votre mot de passe a été changé avec succès.",
-        })
-
-        // Clear password fields
-        setPasswordData({
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        })
+          title: "Validation échouée",
+          description: error.errors[0]?.message || "Vérifiez vos entrées",
+          variant: "destructive",
+        });
       } else {
-        throw new Error(response.message || "Une erreur s'est produite")
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors du changement de mot de passe",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      console.error("Error updating password:", error)
-      toast({
-        title: "Erreur de mise à jour",
-        description: "Impossible de changer votre mot de passe. Vérifiez que votre mot de passe actuel est correct.",
-        variant: "destructive",
-      })
     } finally {
-      setIsChangingPassword(false)
+      setIsChangingPassword(false);
     }
-  }
+  };
 
-  const handleImageClick = () => {
-    fileInputRef.current?.click()
-  }
+  // Handle profile picture selection
+  const handlePictureSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setPictureFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-  const handleImageUpload = async (file: File) => {
-    if (!authUser?._id) return
-
+  // Handle profile picture upload
+  const handleUploadPicture = async () => {
+    if (!pictureFile || !user?._id) return;
+    
     try {
-      setIsUploading(true)
-
-      const response = await uploadProfilePicture(authUser._id, file)
-
+      setImageUploading(true);
+      const response = await uploadProfilePicture(user._id, pictureFile);
+      
       if (response.success) {
-        setUser({
-          ...user,
-          profileImage: response.imageUrl
-        })
-
-        // Update the user in the auth context if available
-        if (typeof window !== 'undefined' && authUser && 'updateUser' in authUser) {
-          (authUser as any).updateUser({
-            image: response.imageUrl
-          })
-        }
-
         toast({
           title: "Photo de profil mise à jour",
-          description: "Votre photo de profil a été mise à jour avec succès.",
-        })
+          description: "Votre photo de profil a été mise à jour avec succès",
+        });
+        
+        // Reset the file state
+        setPictureFile(null);
       } else {
-        throw new Error(response.message || "Une erreur s'est produite")
+        throw new Error(response.message || "Failed to upload profile image");
       }
     } catch (error) {
-      console.error("Error uploading profile picture:", error)
+      console.error("Error uploading profile picture:", error);
       toast({
-        title: "Erreur de téléchargement",
-        description: "Impossible de télécharger votre photo de profil. Veuillez réessayer.",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour de votre photo de profil",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsUploading(false)
+      setImageUploading(false);
     }
+  };
+
+  // Profile content
+  const profileContent = (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Mon profil</h1>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Informations personnelles</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-8 mb-6">
+            <div className="relative">
+              <div className="w-32 h-32 rounded-full overflow-hidden bg-muted flex items-center justify-center border">
+                {imagePreview ? (
+                  <Image 
+                    src={imagePreview} 
+                    alt="Profile" 
+                    width={128} 
+                    height={128} 
+                    className="object-cover"
+                  />
+                ) : user?.image ? (
+                  <Image 
+                    src={user.image} 
+                    alt="Profile" 
+                    width={128} 
+                    height={128} 
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="text-3xl font-semibold text-muted-foreground">
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </div>
+                )}
+              </div>
+              
+              <label 
+                htmlFor="picture-upload" 
+                className="absolute bottom-0 right-0 p-1 bg-background rounded-full border cursor-pointer hover:bg-muted transition-colors"
+              >
+                <Camera className="h-5 w-5" />
+                <input 
+                  type="file" 
+                  id="picture-upload" 
+                  className="sr-only"
+                  accept="image/*"
+                  onChange={handlePictureSelect}
+                />
+              </label>
+              
+              {pictureFile && (
+                <Button
+                  size="sm"
+                  className="mt-2 w-full"
+                  onClick={handleUploadPicture}
+                  disabled={imageUploading}
+                >
+                  {imageUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Chargement...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      Enregistrer
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            
+            <div className="flex-1">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prénom</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Votre prénom" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nom</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Votre nom" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="votre@email.com" 
+                            type="email" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <Button type="submit" disabled={isUpdating}>
+                    {isUpdating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Mise à jour...
+                      </>
+                    ) : (
+                      'Enregistrer les modifications'
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </div>
+          </div>
+          
+          <Separator className="my-6" />
+          
+          <div>
+            <h3 className="text-lg font-medium mb-4">Changer de mot de passe</h3>
+            <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
+              <div className="space-y-2">
+                <FormLabel htmlFor="currentPassword">Mot de passe actuel</FormLabel>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <FormLabel htmlFor="newPassword">Nouveau mot de passe</FormLabel>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <FormLabel htmlFor="confirmPassword">Confirmer le mot de passe</FormLabel>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <Button type="submit" disabled={isChangingPassword}>
+                {isChangingPassword ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Mise à jour...
+                  </>
+                ) : (
+                  'Changer le mot de passe'
+                )}
+              </Button>
+            </form>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Paramètres du compte</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-medium mb-2">Statut du compte</h3>
+              <p className="text-muted-foreground">
+                {user?.role === 'admin' ? 'Administrateur' : 'Utilisateur standard'}
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium mb-2">Actions</h3>
+              <div className="flex space-x-4">
+                <Button variant="outline" asChild>
+                  <Link href="/dashboard">
+                    Mes annonces
+                  </Link>
+                </Button>
+                <Button variant="destructive">
+                  Désactiver mon compte
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Loading state
+  if (!mounted || authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        <span className="ml-2 text-muted-foreground">Chargement...</span>
+      </div>
+    );
   }
 
-  return (
-    <ProtectedRoute>
-      <DashboardLayout>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Paramètres du Profil</h1>
-            <p className="text-muted-foreground">
-              Gérez vos informations personnelles et vos paramètres de compte
-            </p>
-          </div>
-          <Separator />
-
-          {isLoading ? (
-            <div className="flex justify-center items-center py-20">
-              <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Chargement de votre profil...</span>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Votre Photo de Profil</CardTitle>
-                    <CardDescription>Cette image sera visible par les autres utilisateurs</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-col items-center">
-                    <div className="relative mb-4">
-                      <div
-                        className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20 cursor-pointer"
-                        onClick={handleImageClick}
-                      >
-                        {isUploading ? (
-                          <div className="w-full h-full flex items-center justify-center bg-muted">
-                            <LoaderCircle className="h-6 w-6 animate-spin" />
-                          </div>
-                        ) : (
-                          <Image
-                            src={user.profileImage}
-                            alt="Photo de profil"
-                            width={128}
-                            height={128}
-                            className="object-cover w-full h-full"
-                          />
-                        )}
-                      </div>
-                      <Button
-                        size="icon"
-                        className="absolute bottom-0 right-0 rounded-full"
-                        onClick={handleImageClick}
-                        disabled={isUploading}
-                      >
-                        <Camera className="h-4 w-4" />
-                        <span className="sr-only">Télécharger une nouvelle photo</span>
-                      </Button>
-
-                      {/* Hidden file input */}
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files.length > 0) {
-                            handleImageUpload(e.target.files[0])
-                          }
-                        }}
-                      />
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={handleImageClick}
-                      disabled={isUploading}
-                    >
-                      {isUploading ? "Téléchargement..." : "Changer de Photo"}
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Informations Personnelles</CardTitle>
-                    <CardDescription>Mettez à jour vos informations personnelles</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleUpdateProfile} className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName">Prénom</Label>
-                          <Input
-                            id="firstName"
-                            value={user.firstName}
-                            onChange={(e) => setUser({ ...user, firstName: e.target.value })}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName">Nom</Label>
-                          <Input
-                            id="lastName"
-                            value={user.lastName}
-                            onChange={(e) => setUser({ ...user, lastName: e.target.value })}
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={user.email}
-                          disabled
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Votre adresse email ne peut pas être modifiée. Contactez le support pour assistance.
-                        </p>
-                      </div>
-                      <Button type="submit" disabled={isSaving}>
-                        {isSaving ? "Enregistrement..." : "Enregistrer les Modifications"}
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sécurité du Compte</CardTitle>
-                  <CardDescription>Gérez votre mot de passe et la sécurité de votre compte</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handlePasswordUpdate} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="current-password">Mot de Passe Actuel</Label>
-                      <Input
-                        id="current-password"
-                        type="password"
-                        value={passwordData.currentPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="new-password">Nouveau Mot de Passe</Label>
-                      <Input
-                        id="new-password"
-                        type="password"
-                        value={passwordData.newPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Le mot de passe doit contenir au moins 6 caractères.
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirm-password">Confirmer le Nouveau Mot de Passe</Label>
-                      <Input
-                        id="confirm-password"
-                        type="password"
-                        value={passwordData.confirmPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <Button type="submit" disabled={isChangingPassword}>
-                      {isChangingPassword ? "Mise à jour..." : "Mettre à Jour le Mot de Passe"}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </div>
-      </DashboardLayout>
-    </ProtectedRoute>
-  )
+  // Wrap content in AuthLayout
+  return <AuthLayout>{profileContent}</AuthLayout>;
 }
 

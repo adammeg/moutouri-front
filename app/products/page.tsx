@@ -17,7 +17,9 @@ import { Advertisement } from '@/components/advertisement'
 import ProtectedRoute from "@/components/protected-route"
 import { useAuth } from "@/contexts/auth-context"
 import Navbar from "@/components/navbar"
-import AuthLayout from "@/components/auth-layout" 
+import AuthLayout from "@/components/auth-layout"
+import { AdvancedAd } from "@/components/advanced-ad"
+import { AD_POSITIONS } from "@/config/ad-positions"
 
 // Components that use search params need to be separated
 function ProductsContent() {
@@ -146,6 +148,105 @@ function ProductsContent() {
     )
   }
 
+  // Render product grid with integrated ads
+  const renderProductGrid = () => {
+    if (isLoading) {
+      return (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <div className="aspect-square bg-muted rounded-t-lg"></div>
+              <CardContent className="p-3">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+    
+    if (error) {
+      return (
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="p-6 flex items-start">
+            <AlertCircle className="h-5 w-5 text-destructive mr-2 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-destructive">Error</h3>
+              <p className="text-sm text-muted-foreground">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    if (products.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <Package className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">Aucun produit disponible</h3>
+          <p className="text-muted-foreground max-w-md mb-6">
+            {searchQuery ? `Aucun résultat pour "${searchQuery}"` : "Soyez le premier à publier une annonce sur notre plateforme."}
+          </p>
+          <div className="flex justify-end mb-6">
+            {isAuthenticated ? (
+              <Button asChild>
+                <Link href="/products/new">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Publier une annonce
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild>
+                <Link href="/login?redirectTo=/products/new">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Connexion pour publier
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      );
+    }
+    
+    // Inject ads into the product listing at calculated positions
+    const productsWithAds = [...products];
+    
+    // Add an ad after the first 4 products if we have enough products
+    if (products.length >= 4) {
+      productsWithAds.splice(4, 0, { isAd: true, position: AD_POSITIONS.PRODUCT_IN_LIST });
+    }
+    
+    // Add another ad after the 12th product if we have enough products
+    if (products.length >= 12) {
+      productsWithAds.splice(12, 0, { isAd: true, position: AD_POSITIONS.PRODUCT_IN_LIST });
+    }
+    
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {productsWithAds.map((item, index) => {
+          // If this is an ad placeholder, render the ad component
+          if (item.isAd) {
+            return (
+              <div key={`ad-${index}`} className="col-span-1 sm:col-span-1 md:col-span-1">
+                <AdvancedAd
+                  position={item.position}
+                  variant="card"
+                  className="h-full"
+                />
+              </div>
+            );
+          }
+          
+          // Otherwise render a normal product card
+          return (
+            <ProductCard key={item._id} product={item} />
+          );
+        })}
+      </div>
+    );
+  };
+
   if (!isMounted) {
     return <div className="flex items-center justify-center h-96">
       <Loader2 className="h-12 w-12 text-primary animate-spin" />
@@ -218,100 +319,7 @@ function ProductsContent() {
           </TabsList>
         </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <div className="aspect-square bg-muted rounded-t-lg"></div>
-                <CardContent className="p-3">
-                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <>
-            <TabsContent value="all" className="mt-6">
-              {products.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
-                    {products.slice(0, 8).map((product: any) => (
-                      <ProductCard
-                        key={product._id}
-                        product={product}
-                      />
-                    ))}
-                  </div>
-                  
-                  {/* Middle advertisement */}
-                  <Advertisement position="home-middle" className="my-8" />
-
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-                    {products.slice(8).map((product: any) => (
-                      <ProductCard
-                        key={product._id}
-                        product={product}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Package className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Aucun produit disponible</h3>
-                  <p className="text-muted-foreground max-w-md mb-6">
-                    {searchQuery ? `Aucun résultat pour "${searchQuery}"` : "Soyez le premier à publier une annonce sur notre plateforme."}
-                  </p>
-                  <div className="flex justify-end mb-6">
-                    {isAuthenticated ? (
-                      <Button asChild>
-                        <Link href="/products/new">
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Publier une annonce
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button asChild>
-                        <Link href="/login?redirectTo=/products/new">
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Connexion pour publier
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </TabsContent>
-
-            {/* Category tabs */}
-            {categories.map((category) => (
-              <TabsContent key={category._id} value={category._id} className="mt-6">
-                {getProductsByCategory(category._id).length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-                    {getProductsByCategory(category._id).map((product: any) => (
-                      <ProductCard
-                        key={product._id}
-                        product={product}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <Package className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Aucun produit dans {category.name}</h3>
-                    <p className="text-muted-foreground max-w-md mb-6">
-                      Soyez le premier à publier une annonce dans cette catégorie.
-                    </p>
-                    <Button asChild>
-                      <Link href="/products/new">Publier une annonce</Link>
-                    </Button>
-                  </div>
-                )}
-              </TabsContent>
-            ))}
-          </>
-        )}
+        {renderProductGrid()}
         
         {/* Bottom advertisement */}
         <Advertisement position="home-bottom" className="mt-12" />

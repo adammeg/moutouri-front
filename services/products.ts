@@ -1,22 +1,50 @@
 import axios from 'axios';
 import { API_URL } from '@/config/config';
+import { Product } from '@/types/product';
 // Remove the import from cloudinary.ts which is causing the error
 // import { uploadToCloudinary } from '@/lib/cloudinary';
 
+// Type for API response
+interface ProductsResponse {
+  success: boolean;
+  message?: string;
+  products: Product[];
+  totalProducts?: number;
+  totalPages?: number;
+  currentPage?: number;
+}
 // Get all products with optional filters
-export const getProducts = async (filters = {}) => {
-  console.log("Searching products with filters:", filters);
-  const response = await axios.get(`${API_URL}/products`, { params: filters });
-  console.log("Search results:", response.data);
-  return response.data;
+export const getProducts = async (filters = {}): Promise<ProductsResponse> => {
+  try {
+    console.log("Searching products with filters:", filters);
+    const response = await axios.get(`${API_URL}/products`, { params: filters });
+    console.log("Search results:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return {
+      success: false,
+      message: "Failed to fetch products",
+      products: []
+    };
+  }
 };
 
 // Get latest products
-export const getLatestProducts = async (limit = 6) => {
-  console.log("Fetching latest products, limit:", limit);
-  const response = await axios.get(`${API_URL}/products/latest`, { params: { limit } });
-  console.log("Latest products response:", response.data);
-  return response.data;
+export const getLatestProducts = async (limit = 6): Promise<ProductsResponse> => {
+  try {
+    const response = await axios.get(`${API_URL}/products/latest`, { 
+      params: { limit } 
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching latest products:", error);
+    return {
+      success: false,
+      message: "Failed to fetch latest products",
+      products: []
+    };
+  }
 };
 
 // Get products by category
