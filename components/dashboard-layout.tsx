@@ -60,7 +60,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   ]
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen w-full bg-background">
       {/* Sidebar overlay for mobile */}
       {sidebarOpen && (
         <div
@@ -69,11 +69,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - FIXED: improved mobile sidebar with higher z-index and full width */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 border-r bg-sidebar text-sidebar-foreground transition-transform lg:static lg:z-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "fixed inset-y-0 left-0 z-50 w-full max-w-[280px] border-r bg-sidebar text-sidebar-foreground transition-transform lg:static lg:z-0 lg:max-w-[280px] lg:translate-x-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex h-16 items-center border-b px-4">
@@ -101,30 +101,30 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <X className="h-5 w-5" />
           </Button>
         </div>
-        <div className="py-4">
+        <div className="py-4 overflow-y-auto h-[calc(100vh-4rem)]">
           <div className="px-4 mb-4">
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2 mb-4">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center">
                   {user.image ? (
-                    <Image
-                      src={user.image}
+                    <Image 
+                      src={user.image} 
                       alt={`${user.firstName} ${user.lastName}`}
                       fill
                       className="object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
+                        target.src = "/placeholder-user.png";
                       }}
                     />
                   ) : (
-                    <span className="text-xl font-semibold text-muted-foreground">
-                      {user.firstName?.[0]}{user.lastName?.[0]}
+                    <span className="text-lg font-medium text-muted-foreground">
+                      {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
                     </span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">
+                  <p className="text-sm font-medium truncate">
                     {user.firstName} {user.lastName}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
@@ -133,11 +133,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-2 mb-4">
-                <Button asChild>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Connectez-vous pour accéder à toutes les fonctionnalités
+                </p>
+                <Button variant="outline" asChild className="w-full">
                   <Link href="/login">Connexion</Link>
                 </Button>
-                <Button variant="outline" asChild>
+                <Button variant="outline" asChild className="w-full">
                   <Link href="/register">S'inscrire</Link>
                 </Button>
               </div>
@@ -199,10 +202,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </aside>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
+      {/* Main content - FIXED: Better mobile padding and width */}
+      <div className="flex-1 flex flex-col w-full min-w-0">
+        {/* Header - FIXED: Better positioning for mobile */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-background px-2 sm:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -212,22 +215,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <Menu className="h-6 w-6" />
           </Button>
           
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2 overflow-x-auto no-scrollbar">
             {isAuthenticated ? (
               <>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/products">Parcourir les Produits</Link>
+                <Button variant="outline" size="sm" asChild className="whitespace-nowrap">
+                  <Link href="/products">Parcourir</Link>
                 </Button>
-                <Button size="sm" asChild>
-                  <Link href="/products/new">Publier une Annonce</Link>
+                <Button size="sm" asChild className="whitespace-nowrap">
+                  <Link href="/products/new">Publier</Link>
                 </Button>
               </>
             ) : (
               <>
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" asChild className="whitespace-nowrap">
                   <Link href="/login">Connexion</Link>
                 </Button>
-                <Button size="sm" asChild>
+                <Button size="sm" asChild className="whitespace-nowrap">
                   <Link href="/register">S'inscrire</Link>
                 </Button>
               </>
@@ -235,8 +238,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </header>
         
-        {/* Main content area */}
-        <main className="flex-1 p-4">
+        {/* Main content area - FIXED: Better padding for mobile */}
+        <main className="flex-1 p-2 sm:p-4 w-full">
           {children}
         </main>
       </div>

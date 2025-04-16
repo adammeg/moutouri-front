@@ -81,6 +81,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 .bg-gradient-to-r {
@@ -97,6 +102,36 @@
   display: none; /* Chrome, Safari and Opera */
 }
 
+@layer utilities {
+  /* Hide scrollbar but allow scrolling */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Responsive container for small screens */
+  .mobile-container {
+    @apply w-full px-2 sm:px-6 mx-auto;
+  }
+  
+  /* Adjust font sizes for smaller screens */
+  .mobile-text {
+    @apply text-sm sm:text-base;
+  }
+  
+  .mobile-heading {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+}
+.container {
+  width: 100%;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
 /* Make tab triggers more compact on mobile */
 @media (max-width: 640px) {
   .tabs-trigger {
@@ -104,4 +139,26 @@
     padding-right: 12px;
   }
 }
+.card {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
 
+/* Fix for product grid on mobile */
+@media (max-width: 639px) {
+  .grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+  
+  .sm\\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Ensure images don't overflow their containers */
+img {
+  max-width: 100%;
+  height: auto;
+}

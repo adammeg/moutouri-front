@@ -122,7 +122,7 @@ export default function PromotionalAds({ position, className = '' }: Promotional
 
   if (loading) {
     return (
-      <div className={`flex items-center justify-center h-32 bg-muted/50 animate-pulse rounded-lg ${className}`}>
+      <div className={`flex items-center justify-center h-32 bg-muted/50 animate-pulse rounded-lg w-full ${className}`}>
         <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
       </div>
     );
@@ -135,40 +135,41 @@ export default function PromotionalAds({ position, className = '' }: Promotional
 
   const currentAd = ads[currentAdIndex];
 
-  // FIXED: Better image handling
+  // FIXED: Improved mobile display with better aspect ratio handling
   const AdContent = () => (
-    <div className={`relative overflow-hidden rounded-lg ${className}`}>
+    <div className={`relative overflow-hidden rounded-lg w-full ${className}`}>
       <motion.div
         key={currentAd._id}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.4 }}
-        className="relative"
+        className="relative w-full"
       >
-        <div className="relative aspect-[3/1] rounded-lg overflow-hidden group">
+        <div className="relative aspect-[2/1] sm:aspect-[3/1] rounded-lg overflow-hidden group w-full">
           <Image
             src={currentAd.image}
             alt={currentAd.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             onError={handleImageError}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="100vw"
+            priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4 text-white">
-            <h3 className="text-xl font-bold mb-1">{currentAd.title}</h3>
-            <p className="text-sm max-w-xl">{currentAd.description}</p>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-3 sm:p-4 text-white">
+            <h3 className="text-base sm:text-xl font-bold mb-0 sm:mb-1 line-clamp-1">{currentAd.title}</h3>
+            <p className="text-xs sm:text-sm max-w-xl line-clamp-2">{currentAd.description}</p>
           </div>
         </div>
       </motion.div>
 
       {/* Dots indicator for multiple ads */}
       {ads.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1">
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1">
           {ads.map((_, index) => (
             <button
               key={index}
-              className={`w-2 h-2 rounded-full ${
+              className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
                 index === currentAdIndex ? 'bg-white' : 'bg-white/50'
               }`}
               onClick={() => {
@@ -188,7 +189,8 @@ export default function PromotionalAds({ position, className = '' }: Promotional
   return currentAd.link ? (
     <Link href={currentAd.link} target="_blank" rel="noopener noreferrer" 
           onClick={() => currentAd._id && handleAdClick(currentAd._id)}
-          aria-label={currentAd.title}>
+          aria-label={currentAd.title}
+          className="block w-full">
       <AdContent />
     </Link>
   ) : (
