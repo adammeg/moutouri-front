@@ -9,14 +9,6 @@ import { z } from "zod"
 import { Loader2, Camera, Check } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/contexts/auth-context"
@@ -24,6 +16,7 @@ import { updateUserProfile, uploadProfilePicture } from "@/services/user"
 import AuthLayout from "@/components/auth-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Label } from "@/components/ui/label"
 
 // Form schema
 const formSchema = z.object({
@@ -284,68 +277,58 @@ export default function ProfilePage() {
             </div>
           </div>
           
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Prénom</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Votre prénom" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+          {/* Manual form instead of using FormField components */}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">Prénom</Label>
+                <Input
+                  id="firstName"
+                  placeholder="Votre prénom"
+                  {...form.register("firstName")}
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nom</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Votre nom" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {form.formState.errors.firstName && (
+                  <p className="text-sm text-red-500">{form.formState.errors.firstName.message}</p>
+                )}
               </div>
               
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="votre@email.com" 
-                        type="email" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Nom</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Votre nom"
+                  {...form.register("lastName")}
+                />
+                {form.formState.errors.lastName && (
+                  <p className="text-sm text-red-500">{form.formState.errors.lastName.message}</p>
                 )}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="votre@email.com"
+                {...form.register("email")}
               />
-              
-              <Button type="submit" disabled={isUpdating}>
-                {isUpdating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Mise à jour...
-                  </>
-                ) : (
-                  'Enregistrer les modifications'
-                )}
-              </Button>
-            </form>
-          </Form>
+              {form.formState.errors.email && (
+                <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
+              )}
+            </div>
+            
+            <Button type="submit" disabled={isUpdating}>
+              {isUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Mise à jour...
+                </>
+              ) : (
+                'Enregistrer les modifications'
+              )}
+            </Button>
+          </form>
           
           <Separator className="my-6" />
           
@@ -353,7 +336,7 @@ export default function ProfilePage() {
             <h3 className="text-lg font-medium mb-4">Changer de mot de passe</h3>
             <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
               <div className="space-y-2">
-                <FormLabel htmlFor="currentPassword">Mot de passe actuel</FormLabel>
+                <Label htmlFor="currentPassword">Mot de passe actuel</Label>
                 <Input
                   id="currentPassword"
                   type="password"
@@ -365,7 +348,7 @@ export default function ProfilePage() {
               </div>
               
               <div className="space-y-2">
-                <FormLabel htmlFor="newPassword">Nouveau mot de passe</FormLabel>
+                <Label htmlFor="newPassword">Nouveau mot de passe</Label>
                 <Input
                   id="newPassword"
                   type="password"
@@ -377,7 +360,7 @@ export default function ProfilePage() {
               </div>
               
               <div className="space-y-2">
-                <FormLabel htmlFor="confirmPassword">Confirmer le mot de passe</FormLabel>
+                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
