@@ -21,92 +21,103 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
+  const [products, setProducts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [products, setProducts] = useState<any[]>([])
   const [productToDelete, setProductToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [mounted, setMounted] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
-  // Set mounted state
+  // Flag that we're client-side mounted
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Fetch user products when authenticated
+  // Fetch user products
   useEffect(() => {
     const fetchUserProducts = async () => {
-      if (!isAuthenticated || authLoading || !user?._id) {
-        return; // Wait for auth to complete
+      // Only fetch when we're client-side, authenticated, and have user data
+      if (!mounted || authLoading || !isAuthenticated || !user?._id) {
+        return
       }
-      
+
       try {
-        setIsLoading(true);
-        setError(null);
-        console.log(`📦 Fetching products for user: ${user._id}`);
+        setIsLoading(true)
+        setError(null)
         
-        const response = await getUserProducts(user._id);
+        console.log(`📦 Fetching products for user: ${user._id}`)
+        const response = await getUserProducts(user._id)
         
         if (response.success) {
-          console.log(`✅ Found ${response.products?.length || 0} products`);
-          setProducts(response.products || []);
+          console.log(`✅ Found ${response.products?.length || 0} products`)
+          setProducts(response.products || [])
         } else {
-          console.error("❌ Failed to fetch products:", response.message);
-          setError(response.message || "Failed to fetch your products");
+          console.error("❌ Failed to fetch products:", response.message)
+          setError(response.message || "Failed to fetch your products")
         }
-      } catch (error) {
-        console.error("❌ Error fetching user products:", error);
-        setError("An unexpected error occurred. Please try again.");
+      } catch (err) {
+        console.error("❌ Unexpected error:", err)
+        setError("An unexpected error occurred. Please try again.")
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
-
-    if (mounted && isAuthenticated && !authLoading && user?._id) {
-      fetchUserProducts();
     }
-  }, [user, isAuthenticated, authLoading, mounted]);
 
-  // Handle product deletion
+    fetchUserProducts()
+  }, [mounted, user, isAuthenticated, authLoading])
+
   const handleDeleteProduct = async (productId: string) => {
     try {
-      setIsDeleting(true);
+      setIsDeleting(true)
       
-      const response = await deleteProduct(productId);
+      const response = await deleteProduct(productId)
       
       if (response.success) {
-        setProducts(products.filter(product => product._id !== productId));
+        // Update the local state to remove the deleted product
+        setProducts(products.filter((product: any) => product._id !== productId))
+        
         toast({
           title: "Produit supprimé",
           description: "Votre produit a été supprimé avec succès",
-        });
+        })
       } else {
         toast({
           title: "Erreur",
           description: response.message || "Une erreur est survenue lors de la suppression",
           variant: "destructive",
-        });
+        })
       }
     } catch (error) {
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la suppression",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsDeleting(false);
-      setProductToDelete(null);
+      setIsDeleting(false)
+      setProductToDelete(null)
     }
-  };
+  }
 
-  // Dashboard content
+  // Show loading state during initial client-side rendering or while auth is loading
+  if (!mounted || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Chargement...</span>
+      </div>
+    )
+  }
+
+  // Content to render inside layout
   const dashboardContent = (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -118,17 +129,25 @@ export default function DashboardPage() {
           </Link>
         </Button>
       </div>
-
-      {isLoading && !products.length ? (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 text-primary animate-spin" />
+      
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : error ? (
-        <div className="bg-destructive/10 p-4 rounded-md flex items-start space-x-4">
-          <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+        <div className="bg-red-50 border border-red-200 rounded-md p-4 flex gap-3 items-start">
+          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
           <div>
-            <h3 className="font-medium text-destructive">Erreur de chargement</h3>
-            <p className="text-sm text-destructive/90">{error}</p>
+            <h3 className="font-medium text-red-800">Une erreur est survenue</h3>
+            <p className="text-red-700 text-sm mt-1">{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={() => window.location.reload()}
+            >
+              Réessayer
+            </Button>
           </div>
         </div>
       ) : products.length === 0 ? (
@@ -147,7 +166,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map(product => (
+          {products.map((product: any) => (
             <Card key={product._id} className="overflow-hidden">
               <div className="relative aspect-video">
                 <Image
@@ -236,17 +255,8 @@ export default function DashboardPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
+  )
 
-  // During initial client-side rendering, show a loading state
-  if (!mounted || authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 text-primary animate-spin" />
-      </div>
-    );
-  }
-
-  // Use AuthLayout to handle protection and layout
-  return <AuthLayout>{dashboardContent}</AuthLayout>;
+  // Use AuthLayout to ensure authentication
+  return <AuthLayout>{dashboardContent}</AuthLayout>
 }
