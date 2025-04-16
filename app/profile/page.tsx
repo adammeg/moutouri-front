@@ -18,7 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/contexts/auth-context"
 import { updateUserProfile, uploadProfilePicture } from "@/services/user"
 import AuthLayout from "@/components/auth-layout"
@@ -55,11 +55,6 @@ export default function ProfilePage() {
     confirmPassword: "",
   })
 
-  // Flag that we're client-side mounted
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
   // Initialize form with user data
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -70,106 +65,112 @@ export default function ProfilePage() {
     },
   })
 
-  // Update form with user data when available
+  // Set mounted state
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Update form when user data is available
   useEffect(() => {
     if (user && mounted) {
-      console.log("📋 Setting up profile form with user data:", user);
+      console.log("📋 Setting up profile form with user data:", user)
       form.reset({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
         email: user.email || "",
-      });
+      })
       
       if (user.image) {
-        setImagePreview(user.image);
+        setImagePreview(user.image)
       }
     }
-  }, [user, form, mounted]);
+  }, [user, form, mounted])
 
   // Handle profile picture change
   const handlePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     
-    if (!file) return;
+    if (!file) return
     
-    setPictureFile(file);
+    setPictureFile(file)
     
     // Show preview
-    const reader = new FileReader();
+    const reader = new FileReader()
     reader.onload = (event) => {
-      setImagePreview(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
+      setImagePreview(event.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
 
-  // Upload profile picture
+  // Handle profile picture upload
   const handleUploadPicture = async () => {
-    if (!pictureFile || !user?._id) return;
+    if (!pictureFile || !user?._id) return
     
     try {
-      setImageUploading(true);
+      setImageUploading(true)
       
-      // Call API to upload
-      // This is a placeholder for your actual upload function
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await uploadProfilePicture(user._id, pictureFile)
       
-      toast({
-        title: "Photo de profil mise à jour",
-        description: "Votre photo de profil a été mise à jour avec succès",
-      });
+      if (response.success) {
+        toast({
+          title: "Photo de profil mise à jour",
+          description: "Votre photo de profil a été mise à jour avec succès",
+        })
+      } else {
+        throw new Error(response.message || "Failed to upload profile picture")
+      }
     } catch (error) {
-      console.error("Error uploading profile picture:", error);
+      console.error("Error uploading profile picture:", error)
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la mise à jour de votre photo de profil",
         variant: "destructive",
-      });
+      })
     } finally {
-      setImageUploading(false);
+      setImageUploading(false)
     }
-  };
+  }
 
   // Handle form submission
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user?._id) return;
+    if (!user?._id) return
     
     try {
-      setIsUpdating(true);
-      console.log("Updating profile with:", values);
+      setIsUpdating(true)
+      console.log("Updating profile with:", values)
       
-      // Update profile information
-      const response = await updateUserProfile(values);
+      const response = await updateUserProfile(values)
       
       if (response.success) {
         toast({
           title: "Profil mis à jour",
           description: "Vos informations ont été mises à jour avec succès",
-        });
+        })
       } else {
-        throw new Error(response.message || "Failed to update profile");
+        throw new Error(response.message || "Failed to update profile")
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Error updating profile:", error)
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la mise à jour de votre profil",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsUpdating(false);
+      setIsUpdating(false)
     }
-  };
+  }
 
   // Handle password change
   const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     
     try {
-      setIsChangingPassword(true);
+      setIsChangingPassword(true)
       
       // Validate passwords match
       if (passwordData.newPassword !== passwordData.confirmPassword) {
-        throw new Error("Les mots de passe ne correspondent pas");
+        throw new Error("Les mots de passe ne correspondent pas")
       }
       
       // API call would go here
@@ -177,27 +178,37 @@ export default function ProfilePage() {
       toast({
         title: "Mot de passe mis à jour",
         description: "Votre mot de passe a été changé avec succès",
-      });
+      })
       
       // Reset form
       setPasswordData({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
-      });
+      })
     } catch (error) {
-      console.error("Error changing password:", error);
+      console.error("Error changing password:", error)
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Une erreur est survenue",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsChangingPassword(false);
+      setIsChangingPassword(false)
     }
-  };
+  }
 
-  // Profile content JSX
+  // Show loading state during initial client-side rendering
+  if (!mounted || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Chargement...</span>
+      </div>
+    )
+  }
+
+  // Profile content to render
   const profileContent = (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Mon Profil</h1>
@@ -213,8 +224,9 @@ export default function ProfilePage() {
                 <Image
                   src={imagePreview}
                   alt="Profile picture"
-                  layout="fill"
-                  objectFit="cover"
+                  width={96}
+                  height={96}
+                  className="object-cover"
                 />
               ) : (
                 <span className="text-2xl font-semibold text-muted-foreground">
@@ -392,16 +404,6 @@ export default function ProfilePage() {
       </Card>
     </div>
   );
-
-  // Show loading state during initial client-side rendering
-  if (!mounted || authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Chargement...</span>
-      </div>
-    );
-  }
 
   // Use AuthLayout to handle authentication
   return <AuthLayout>{profileContent}</AuthLayout>;

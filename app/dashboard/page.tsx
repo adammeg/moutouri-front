@@ -7,7 +7,7 @@ import { Loader2, Package, AlertCircle, PlusCircle, Edit, Trash2, Eye } from "lu
 import { getUserProducts, deleteProduct } from "@/services/products"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/contexts/auth-context"
 import AuthLayout from "@/components/auth-layout"
 import Image from "next/image"
@@ -22,12 +22,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Product } from "@/types/product"
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
-  const [products, setProducts] = useState([])
+  const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [productToDelete, setProductToDelete] = useState<string | null>(null)
@@ -36,12 +36,12 @@ export default function DashboardPage() {
   const { toast } = useToast()
   const router = useRouter()
 
-  // Flag that we're client-side mounted
+  // Set mounted state for client-side rendering
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Fetch user products
+  // Fetch user products when authenticated
   useEffect(() => {
     const fetchUserProducts = async () => {
       // Only fetch when we're client-side, authenticated, and have user data
@@ -74,6 +74,7 @@ export default function DashboardPage() {
     fetchUserProducts()
   }, [mounted, user, isAuthenticated, authLoading])
 
+  // Handle product deletion
   const handleDeleteProduct = async (productId: string) => {
     try {
       setIsDeleting(true)
@@ -82,7 +83,7 @@ export default function DashboardPage() {
       
       if (response.success) {
         // Update the local state to remove the deleted product
-        setProducts(products.filter((product: any) => product._id !== productId))
+        setProducts(products.filter(product => product._id !== productId))
         
         toast({
           title: "Produit supprimé",
@@ -107,7 +108,7 @@ export default function DashboardPage() {
     }
   }
 
-  // Show loading state during initial client-side rendering or while auth is loading
+  // Show loading state during initial client-side rendering
   if (!mounted || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -117,7 +118,7 @@ export default function DashboardPage() {
     )
   }
 
-  // Content to render inside layout
+  // Dashboard content to render inside layout
   const dashboardContent = (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -166,7 +167,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((product: any) => (
+          {products.map((product) => (
             <Card key={product._id} className="overflow-hidden">
               <div className="relative aspect-video">
                 <Image
@@ -257,6 +258,6 @@ export default function DashboardPage() {
     </div>
   )
 
-  // Use AuthLayout to ensure authentication
+  // Use AuthLayout to handle authentication and layout
   return <AuthLayout>{dashboardContent}</AuthLayout>
 }
