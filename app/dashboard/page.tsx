@@ -25,7 +25,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Product } from "@/types/product"
 
-export default function DashboardPage() {
+// Wrap dashboard content in this component so we can keep AuthLayout for consistent UI
+// while still controlling data fetching timing
+function DashboardContent() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -36,66 +38,79 @@ export default function DashboardPage() {
   const { toast } = useToast()
   const router = useRouter()
 
-  console.log("Dashboard render - Auth state:", { 
-    isAuthenticated, 
+  // DIAGNOSTIC LOG: Component mounting
+  console.log("[Dashboard] Component mounting:", { 
     authLoading, 
-    userId: user?._id,
-    mounted
+    isAuthenticated, 
+    userId: user?._id 
   })
 
   // Set mounted state for client-side rendering
   useEffect(() => {
     setMounted(true)
+    console.log("[Dashboard] Component mounted")
   }, [])
 
   // Fetch user products when authenticated
   useEffect(() => {
+    // DIAGNOSTIC LOG: Data fetch effect triggered
+    console.log("[Dashboard] Data fetch effect running:", {
+      mounted,
+      authLoading,
+      isAuthenticated,
+      userId: user?._id,
+      token: localStorage.getItem('accessToken')?.substring(0, 10) + '...'
+    })
+
     const fetchUserProducts = async () => {
-      // Only fetch when we're client-side, authenticated, and have user data
-      if (!mounted || authLoading) {
-        console.log("Skipping product fetch - not ready yet")
+      // Only fetch when mounted and auth has resolved
+      if (!mounted) {
+        console.log("[Dashboard] Skipping fetch - not mounted yet")
+        return
+      }
+
+      if (authLoading) {
+        console.log("[Dashboard] Skipping fetch - auth still loading")
         return
       }
 
       if (!isAuthenticated || !user?._id) {
-        console.log("Skipping product fetch - not authenticated or no user ID")
+        console.log("[Dashboard] Skipping fetch - not authenticated or no user ID")
         setIsLoading(false)
         return
       }
 
       try {
         setIsLoading(true)
-        setError(null)
+        console.log("[Dashboard] Starting product fetch for user:", user._id)
         
-        console.log(`📦 Fetching products for user: ${user._id}`)
         const response = await getUserProducts(user._id)
-        
-        console.log("User products API response:", response)
+        console.log("[Dashboard] API response:", response)
         
         if (response.success) {
-          console.log(`✅ Found ${response.products?.length || 0} products`)
+          console.log("[Dashboard] Fetch successful:", response.products?.length, "products")
           setProducts(response.products || [])
         } else {
-          console.error("❌ Failed to fetch products:", response.message)
+          console.error("[Dashboard] API returned error:", response.message)
           setError(response.message || "Failed to fetch your products")
         }
       } catch (err) {
-        console.error("❌ Unexpected error:", err)
+        console.error("[Dashboard] Exception during fetch:", err)
         setError("An unexpected error occurred. Please try again.")
       } finally {
         setIsLoading(false)
+        console.log("[Dashboard] Fetch completed, loading state cleared")
       }
     }
 
     fetchUserProducts()
-  }, [mounted, user, isAuthenticated, authLoading])
+  }, [mounted, authLoading, isAuthenticated, user])
 
   // Handle product deletion
   const handleDeleteProduct = async (productId: string) => {
     try {
       setIsDeleting(true)
       
-      console.log(`🗑️ Deleting product: ${productId}`)
       const response = await deleteProduct(productId)
       
       if (response.success) {
@@ -126,44 +141,27 @@ export default function DashboardPage() {
     }
   }
 
-  // Debug render
-  console.log("Dashboard render state:", { 
+  // DIAGNOSTIC LOG: Component rendering
+  console.log("[Dashboard] Rendering with state:", { 
+    mounted,
+    authLoading, 
+    isAuthenticated, 
     isLoading, 
     productsCount: products.length,
-    error,
-    isAuthenticated,
-    userId: user?._id
+    hasError: !!error
   })
 
-  // Show loading state during initial client-side rendering
+  // Show loading state if not mounted or auth is still loading
   if (!mounted || authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="py-12 flex justify-center items-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Chargement de l'authentification...</span>
+        <span className="ml-2 text-muted-foreground">Chargement...</span>
       </div>
     )
   }
 
-  // Not authenticated - show login message
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold mb-4">Connectez-vous pour accéder à votre tableau de bord</h1>
-          <p className="text-muted-foreground mb-6">
-            Vous devez être connecté pour voir vos annonces et gérer votre compte.
-          </p>
-          <Button asChild>
-            <Link href="/login">Se connecter</Link>
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
-  // Dashboard content to render inside layout
-  const dashboardContent = (
+  return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold tracking-tight">Mes annonces</h1>
@@ -302,7 +300,15 @@ export default function DashboardPage() {
       </AlertDialog>
     </div>
   )
+}
 
-  // Return the dashboard without using AuthLayout to avoid potential issues
-  return dashboardContent;
+// Main Dashboard Page that uses AuthLayout for consistent UI
+export default function DashboardPage() {
+  console.log("[DashboardPage] Main component rendering")
+  
+  return (
+    <AuthLayout>
+      <DashboardContent />
+    </AuthLayout>
+  )
 }
