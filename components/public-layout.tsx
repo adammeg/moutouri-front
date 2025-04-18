@@ -17,7 +17,7 @@ export default function PublicLayout({
       <header className="container flex items-center justify-between py-4">
         <Link href="/" className="flex items-center space-x-2">
           <Image 
-            src="/logo-moutouri.png" 
+            src="/moutouri_logo.jpg" 
             alt="Moutouri Logo" 
             width={40} 
             height={40}

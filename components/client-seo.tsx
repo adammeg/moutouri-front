@@ -1,4 +1,4 @@
- 'use client';
+  'use client';
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -15,7 +15,7 @@ export default function ClientSEO({
   title = 'Moutouri - Achetez et vendez des motos et scooters en Tunisie',
   description = 'Moutouri est la première plateforme dédiée à l\'achat et la vente de motos, scooters et pièces détachées en Tunisie. Trouvez votre prochaine moto ou vendez la vôtre facilement.',
   canonical,
-  ogImage = '/logo-moutouri.png',
+  ogImage = '/moutouri_logo.jpg',
   noIndex = false,
 }: SEOProps) {
   const router = useRouter();
