@@ -25,19 +25,22 @@ const nextConfig = {
       domains: ['localhost', 'moutouri-back.onrender.com', 'res.cloudinary.com'],
       unoptimized: true,
     },
+    reactStrictMode: true,
     experimental: {
-      serverActions: true,
+      serverActions: {
+        allowedOrigins: ['localhost:3000', 'moutouri.tn']
+      },
     },
     // Add CORS headers for API requests
     async headers() {
       return [
         {
-          source: '/:path*',
+          source: '/(.*)',
           headers: [
-            { key: 'Access-Control-Allow-Credentials', value: 'true' },
-            { key: 'Access-Control-Allow-Origin', value: '*' },
-            { key: 'Access-Control-Allow-Methods', value: 'GET,DELETE,PATCH,POST,PUT' },
-            { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization' },
+            {
+              key: 'Cross-Origin-Opener-Policy',
+              value: 'same-origin',
+            },
           ],
         },
       ]

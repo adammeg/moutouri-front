@@ -25,12 +25,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
+    DialogFooter,
     DialogTrigger,
-} from '@/components/ui/dialog';
+    DialogClose,
+  } from "@/components/ui/dialog-compat"
+  
 import {
     Form,
     FormControl,
