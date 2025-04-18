@@ -5,7 +5,8 @@ import Link from "next/link"
 import { Loader2, Package, AlertCircle, PlusCircle } from "lucide-react"
 import Image from 'next/image'
 import SEO from "@/components/seo"
-import { ProductCard } from "@/components/product-card"
+import ProductCard from "@/components/product-card"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
