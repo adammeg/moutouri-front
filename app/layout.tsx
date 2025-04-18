@@ -73,7 +73,7 @@ export default function RootLayout({
         <meta property="og:description" content="Achetez, vendez et échangez des motos, scooters et pièces en Tunisie" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.moutouri.tn" />
-        <meta property="og:image" content="https://www.moutouri.tn/logo-moutouri.ico" />
+        <meta property="og:image" content="https://www.moutouri.tn/moutouri_logo.ico" />
         <meta property="og:site_name" content="Moutouri" />
         <meta property="og:locale" content="fr_FR" />
         
@@ -81,7 +81,7 @@ export default function RootLayout({
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Moutouri - Marketplace de Motos" />
         <meta name="twitter:description" content="Achetez, vendez et échangez des motos, scooters et pièces en Tunisie" />
-        <meta name="twitter:image" content="https://www.moutouri.tn/logo-moutouri.ico" />
+        <meta name="twitter:image" content="https://www.moutouri.tn/moutouri_logo.ico" />
       </head>
       <body className={inter.className}>
         <SpeedInsights/> 
