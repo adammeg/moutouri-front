@@ -44,7 +44,7 @@ export default function Navbar() {
           <div className="flex items-center">
             <Link href="/products" className="flex items-center gap-2">
               <Image 
-                src="/logo-moutouri.png" 
+                src="/moutouri_logo.jpg" 
                 alt="Moutouri Logo" 
                 width={40} 
                 height={40}

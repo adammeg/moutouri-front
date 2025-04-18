@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://moutouri.tn/logo-moutouri.ico',
+        url: 'https://moutouri.tn/moutouri_logo.ico',
         width: 1200,
         height: 630,
         alt: 'Moutouri - Marketplace des Motos et Scooters'
@@ -53,11 +53,11 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
-      <link rel="icon" href="/logo-moutouri.ico" />
+      <link rel="icon" href="/moutouri_logo.ico" />
   
-  <link rel="icon" type="image/png" sizes="32x32" href="/logo-moutouri.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/logo-moutouri.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/logo-moutouri.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/moutouri_logo.jpg" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/moutouri_logo.jpg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/moutouri_logo.jpg" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5" />
   <meta name="msapplication-TileColor" content="#2d89ef" />
