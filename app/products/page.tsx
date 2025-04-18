@@ -20,6 +20,7 @@ import Navbar from "@/components/navbar"
 import AuthLayout from "@/components/auth-layout"
 import { AdvancedAd } from "@/components/advanced-ad"
 import { AD_POSITIONS } from "@/config/ad-positions"
+import ProductListingWithAds from "@/components/product-listing-with-ads"
 
 // Components that use search params need to be separated
 function ProductsContent() {
@@ -319,7 +320,9 @@ function ProductsContent() {
           </TabsList>
         </div>
 
-        {renderProductGrid()}
+        {!isLoading && !error && products.length > 0 && (
+          <ProductListingWithAds products={products} />
+        )}
         
         {/* Bottom advertisement */}
         <Advertisement position="home-bottom" className="mt-12" />

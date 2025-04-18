@@ -8,7 +8,7 @@ import { Loader2, Search, PlusCircle, ChevronRight, BikeIcon, Wrench, Sparkles }
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { ProductCard } from "@/components/product-card"
+import ProductCard from "@/components/product-card"
 import { CategoryCard } from "@/components/category-card"
 import { getLatestProducts } from "@/services/products"
 import { getCategories } from "@/services/categories"
