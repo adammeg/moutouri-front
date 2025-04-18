@@ -332,7 +332,7 @@ export default function HomePage() {
             <div>
               <Link href="/" className="flex items-center gap-2 mb-4">
                 <Image 
-                  src="/logo-moutouri.png" 
+                  src="/moutouri_logo.jpg" 
                   alt="Moutouri" 
                   width={40} 
                   height={40} 
