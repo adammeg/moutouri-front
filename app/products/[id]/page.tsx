@@ -407,7 +407,7 @@ export default function ProductDetailsPage() {
                       
                       return (
                         <div className="space-y-2">
-                          {seller?.phone ? (
+                          {product.user.phone ? (
                             <div className="flex">
                               <Button 
                                 variant="outline" 
@@ -457,19 +457,19 @@ export default function ProductDetailsPage() {
           <DialogHeader>
             <DialogTitle>Contacter le vendeur</DialogTitle>
             <DialogDescription>
-              Vous pouvez contacter {product?.publisher?.firstName} {product?.publisher?.lastName} par téléphone.
+              Vous pouvez contacter {product?.user?.firstName} {product?.user?.lastName} par téléphone.
             </DialogDescription>
           </DialogHeader>
           
           <div className="mt-6 space-y-4">
-            {product?.publisher?.phone ? (
+            {product?.user?.phone ? (
               <div className="flex items-center justify-between p-4 border rounded-md">
                 <div className="flex items-center gap-3">
                   <div className="bg-primary/10 p-2 rounded-full">
                     <Phone className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{product.publisher.phone}</p>
+                    <p className="text-sm font-medium">{product.user.phone}</p>
                     <p className="text-xs text-muted-foreground">Numéro de téléphone</p>
                   </div>
                 </div>
@@ -477,7 +477,7 @@ export default function ProductDetailsPage() {
                   variant="default" 
                   size="sm"
                   onClick={() => {
-                    window.location.href = `tel:${product.publisher.phone}`;
+                    window.location.href = `tel:${product.user.phone}`;
                   }}
                 >
                   Appeler
