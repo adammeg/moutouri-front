@@ -28,7 +28,7 @@ import { Product } from "@/types/product"
 // Wrap dashboard content in this component so we can keep AuthLayout for consistent UI
 // while still controlling data fetching timing
 function DashboardContent() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth()
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,11 +38,21 @@ function DashboardContent() {
   const { toast } = useToast()
   const router = useRouter()
 
+  // Safely parse user from localStorage
+  let user: { _id?: string; id?: string } | null = null
+  if (typeof window !== "undefined") {
+    const userStr = localStorage.getItem("user")
+    try {
+      user = userStr ? JSON.parse(userStr) : null
+    } catch (e) {
+      user = null
+    }
+  }
   // DIAGNOSTIC LOG: Component mounting
   console.log("[Dashboard] Component mounting:", { 
     authLoading, 
     isAuthenticated, 
-    userId: user?._id 
+    userId: user?.id 
   })
 
   // Set mounted state for client-side rendering
@@ -55,13 +65,13 @@ function DashboardContent() {
       mounted,
       authLoading,
       isAuthenticated,
-      userId: user?._id,
+      userId: user?.id,
       token: localStorage.getItem('accessToken')?.substring(0, 10) + '...'
     });
   
     const fetchUserProducts = async () => {
       // Wait for all required data to be ready
-      if (!mounted || authLoading || !user?._id) {
+      if (!mounted || authLoading || !user?.id) {
         console.log(`[Dashboard] Skipping fetch - ${
           !mounted ? 'not mounted yet' : 
           authLoading ? 'auth still loading' : 
@@ -73,9 +83,9 @@ function DashboardContent() {
       try {
         setIsLoading(true);
         setError(null);
-        console.log("[Dashboard] Starting product fetch for user:", user._id);
+        console.log("[Dashboard] Starting product fetch for user:", user.id);
         
-        const response = await getUserProducts(user._id);
+        const response = await getUserProducts(user.id);
         console.log("[Dashboard] API response:", response);
         
         if (response.success) {
@@ -102,7 +112,7 @@ function DashboardContent() {
     };
   
     fetchUserProducts();
-  }, [mounted, authLoading, isAuthenticated, user?._id]);  // Only depend on user._id instead of whole user object
+  }, [mounted, authLoading, isAuthenticated, user?.id]);  // Only depend on user._id instead of whole user object
 
   // Handle product deletion
   const handleDeleteProduct = async (productId: string) => {
