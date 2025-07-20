@@ -50,8 +50,6 @@ function DashboardContent() {
     setMounted(true)
     console.log("[Dashboard] Component mounted")
   }, [])
-
-  // Fetch user products when authenticated
   useEffect(() => {
     console.log("[Dashboard] Data fetch effect running:", {
       mounted,
@@ -62,19 +60,13 @@ function DashboardContent() {
     });
   
     const fetchUserProducts = async () => {
-      // Early exit conditions
-      if (!mounted || authLoading || !user) {
+      // Wait for all required data to be ready
+      if (!mounted || authLoading || !user?._id) {
         console.log(`[Dashboard] Skipping fetch - ${
           !mounted ? 'not mounted yet' : 
           authLoading ? 'auth still loading' : 
-          'user not loaded'
+          'user ID not available'
         }`);
-        return;
-      }
-  
-      if (!isAuthenticated || !user._id) {
-        console.log("[Dashboard] Skipping fetch - not authenticated or no user ID");
-        setIsLoading(false);
         return;
       }
   
@@ -87,8 +79,9 @@ function DashboardContent() {
         console.log("[Dashboard] API response:", response);
         
         if (response.success) {
-          console.log("[Dashboard] Fetch successful:", response.data?.length, "products");
-          setProducts(response.data || []);
+          const products = response.data || response.products || [];
+          console.log("[Dashboard] Fetch successful:", products.length, "products");
+          setProducts(products);
         } else {
           console.error("[Dashboard] API returned error:", response.message);
           setError(response.message || "Failed to fetch your products");
@@ -109,7 +102,7 @@ function DashboardContent() {
     };
   
     fetchUserProducts();
-  }, [mounted, authLoading, isAuthenticated, user]);
+  }, [mounted, authLoading, isAuthenticated, user?._id]);  // Only depend on user._id instead of whole user object
 
   // Handle product deletion
   const handleDeleteProduct = async (productId: string) => {
