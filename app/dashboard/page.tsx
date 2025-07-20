@@ -63,43 +63,45 @@ function DashboardContent() {
     })
 
     const fetchUserProducts = async () => {
-      // Only fetch when mounted and auth has resolved
-      if (!mounted) {
-        console.log("[Dashboard] Skipping fetch - not mounted yet")
+      // Early exit conditions
+      if (!mounted || authLoading) {
+        console.log(`[Dashboard] Skipping fetch - ${!mounted ? 'not mounted yet' : 'auth still loading'}`)
         return
       }
-
-      if (authLoading) {
-        console.log("[Dashboard] Skipping fetch - auth still loading")
-        return
-      }
-
+    
       if (!isAuthenticated || !user?._id) {
         console.log("[Dashboard] Skipping fetch - not authenticated or no user ID")
         setIsLoading(false)
         return
       }
-
+    
       try {
         setIsLoading(true)
+        setError(null) // Clear previous errors
         console.log("[Dashboard] Starting product fetch for user:", user._id)
         
         const response = await getUserProducts(user._id)
         console.log("[Dashboard] API response:", response)
         
         if (response.success) {
-          console.log("[Dashboard] Fetch successful:", response.products?.length, "products")
-          setProducts(response.products || [])
+          console.log("[Dashboard] Fetch successful:", response.data?.length, "products")
+          setProducts(response.data || []) // Note: Changed from response.products to response.data
         } else {
           console.error("[Dashboard] API returned error:", response.message)
           setError(response.message || "Failed to fetch your products")
+          setProducts([]) // Clear products on error
         }
       } catch (err) {
         console.error("[Dashboard] Exception during fetch:", err)
-        setError("An unexpected error occurred. Please try again.")
+        const errorMessage =
+          (err && typeof err === "object" && "message" in err && typeof (err as any).message === "string")
+            ? (err as any).message
+            : "An unexpected error occurred. Please try again.";
+        setError(errorMessage);
+        setProducts([]); // Clear products on error
       } finally {
-        setIsLoading(false)
-        console.log("[Dashboard] Fetch completed, loading state cleared")
+        setIsLoading(false);
+        console.log("[Dashboard] Fetch completed");
       }
     }
 

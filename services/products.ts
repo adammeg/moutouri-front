@@ -58,16 +58,11 @@ export const getUserProducts = async (userId: string) => {
   try {
     console.log(`Fetching products for user: ${userId}`);
     
-    // Get the auth token
     const token = localStorage.getItem('accessToken');
     
     if (!token) {
-      console.error('No auth token found when trying to fetch user products');
-      return { 
-        success: false, 
-        message: 'Authentication required',
-        products: []
-      };
+      console.error('No auth token found');
+      throw new Error('Authentication required');
     }
     
     const response = await axios.get(`${API_URL}/users/${userId}/products`, {
@@ -77,15 +72,31 @@ export const getUserProducts = async (userId: string) => {
     });
     
     console.log("User products response:", response.data);
-    return response.data;
+    
+    // Ensure consistent response structure
+    return {
+      ...response.data,
+      products: response.data.data || [] // Map data to products for frontend
+    };
+    
   } catch (error) {
     console.error('Error fetching user products:', error);
+    
+    // Handle different error cases
+    let errorMessage = 'Failed to fetch your products';
+    
+    if (axios.isAxiosError(error)) {
+      errorMessage = error.response?.data?.message || 
+                    error.message || 
+                    'Request failed';
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
     return { 
       success: false, 
-      message: axios.isAxiosError(error) && error.response?.data?.message
-        ? error.response.data.message
-        : 'Failed to fetch your products',
-      products: []
+      message: errorMessage,
+      products: [] 
     };
   }
 };

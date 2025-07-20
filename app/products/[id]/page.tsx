@@ -182,7 +182,7 @@ export default function ProductDetailsPage() {
           {/* Product JSON-LD */}
           <ProductJsonLd 
             product={product} 
-            url={`${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/products/${product._id}`}
+            url={`${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/products/${product.title}`}
           />
           
           {/* Breadcrumbs */}
