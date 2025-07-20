@@ -376,7 +376,7 @@ export default function ProductDetailsPage() {
                     <h4 className="text-sm font-medium mb-2">Vendeur</h4>
                     {(() => {
                       // Access seller information
-                      const seller = product.publisher || product.user;
+                      const seller = product.user;
                       
                       return (
                         <div className="flex items-center">
@@ -388,7 +388,7 @@ export default function ProductDetailsPage() {
                           </Avatar>
                           <div className="ml-3">
                             <p className="text-sm font-medium">
-                              {seller?.firstName} {seller?.lastName}
+                              {product.user.firstName} {product.user.lastName}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               Membre depuis {new Date(seller?.createdAt).toLocaleDateString()}
@@ -403,7 +403,7 @@ export default function ProductDetailsPage() {
                     <h4 className="text-sm font-medium mb-2">Contact</h4>
                     {(() => {
                       // Access seller for contact information
-                      const seller = product.publisher || product.user;
+                      const seller = product.user;
                       
                       return (
                         <div className="space-y-2">
@@ -413,8 +413,8 @@ export default function ProductDetailsPage() {
                                 variant="outline" 
                                 className="w-full justify-start" 
                                 onClick={() => {
-                                  if (seller?.phone) {
-                                    navigator.clipboard.writeText(seller.phone);
+                                  if (product.user.phone) {
+                                    navigator.clipboard.writeText(product.user.phone);
                                     toast?.({
                                       title: "Numéro copié !",
                                       description: "Numéro de téléphone copié avec succès.",
