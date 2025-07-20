@@ -53,60 +53,63 @@ function DashboardContent() {
 
   // Fetch user products when authenticated
   useEffect(() => {
-    // DIAGNOSTIC LOG: Data fetch effect triggered
     console.log("[Dashboard] Data fetch effect running:", {
       mounted,
       authLoading,
       isAuthenticated,
       userId: user?._id,
       token: localStorage.getItem('accessToken')?.substring(0, 10) + '...'
-    })
-
+    });
+  
     const fetchUserProducts = async () => {
       // Early exit conditions
-      if (!mounted || authLoading) {
-        console.log(`[Dashboard] Skipping fetch - ${!mounted ? 'not mounted yet' : 'auth still loading'}`)
-        return
+      if (!mounted || authLoading || !user) {
+        console.log(`[Dashboard] Skipping fetch - ${
+          !mounted ? 'not mounted yet' : 
+          authLoading ? 'auth still loading' : 
+          'user not loaded'
+        }`);
+        return;
       }
-    
-      if (!isAuthenticated || !user?._id) {
-        console.log("[Dashboard] Skipping fetch - not authenticated or no user ID")
-        setIsLoading(false)
-        return
+  
+      if (!isAuthenticated || !user._id) {
+        console.log("[Dashboard] Skipping fetch - not authenticated or no user ID");
+        setIsLoading(false);
+        return;
       }
-    
+  
       try {
-        setIsLoading(true)
-        setError(null) // Clear previous errors
-        console.log("[Dashboard] Starting product fetch for user:", user._id)
+        setIsLoading(true);
+        setError(null);
+        console.log("[Dashboard] Starting product fetch for user:", user._id);
         
-        const response = await getUserProducts(user._id)
-        console.log("[Dashboard] API response:", response)
+        const response = await getUserProducts(user._id);
+        console.log("[Dashboard] API response:", response);
         
         if (response.success) {
-          console.log("[Dashboard] Fetch successful:", response.data?.length, "products")
-          setProducts(response.data || []) // Note: Changed from response.products to response.data
+          console.log("[Dashboard] Fetch successful:", response.data?.length, "products");
+          setProducts(response.data || []);
         } else {
-          console.error("[Dashboard] API returned error:", response.message)
-          setError(response.message || "Failed to fetch your products")
-          setProducts([]) // Clear products on error
+          console.error("[Dashboard] API returned error:", response.message);
+          setError(response.message || "Failed to fetch your products");
+          setProducts([]);
         }
       } catch (err) {
-        console.error("[Dashboard] Exception during fetch:", err)
-        const errorMessage =
-          (err && typeof err === "object" && "message" in err && typeof (err as any).message === "string")
-            ? (err as any).message
-            : "An unexpected error occurred. Please try again.";
-        setError(errorMessage);
-        setProducts([]); // Clear products on error
+        console.error("[Dashboard] Exception during fetch:", err);
+        setError(
+          err instanceof Error ? err.message :
+          typeof err === 'string' ? err :
+          'An unexpected error occurred'
+        );
+        setProducts([]);
       } finally {
         setIsLoading(false);
         console.log("[Dashboard] Fetch completed");
       }
-    }
-
-    fetchUserProducts()
-  }, [mounted, authLoading, isAuthenticated, user])
+    };
+  
+    fetchUserProducts();
+  }, [mounted, authLoading, isAuthenticated, user]);
 
   // Handle product deletion
   const handleDeleteProduct = async (productId: string) => {
