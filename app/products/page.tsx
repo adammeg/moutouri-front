@@ -37,7 +37,7 @@ function ProductsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   useEffect(() => {
-    location.reload()
+    window.location.reload()
     setIsMounted(true);
   }, []);
 
