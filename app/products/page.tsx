@@ -37,8 +37,10 @@ function ProductsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   useEffect(() => {
-    window.location.reload()
     setIsMounted(true);
+    if (isMounted){
+      window.location.reload()
+    }
   }, []);
 
   // Fetch categories and products when search parameters change
